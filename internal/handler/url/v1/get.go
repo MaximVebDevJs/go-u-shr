@@ -2,11 +2,13 @@ package v1
 
 import (
 	"net/http"
+
+	"github.com/go-chi/chi/v5"
 )
 
 // GetUrl GET /{id}.
 func (h *Handler) GetUrl(w http.ResponseWriter, r *http.Request) error {
-	id := r.PathValue("id")
+	id := chi.URLParam(r, "id")
 
 	originalURL, err := h.urlService.Get(r.Context(), id)
 	if err != nil {
