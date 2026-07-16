@@ -10,11 +10,11 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/MaximVebDevJs/go-u-shr/internal/config"
 	"github.com/MaximVebDevJs/go-u-shr/pkg/app"
 )
 
 const (
-	httpAddress     = "0.0.0.0:8080"
 	shutdownTimeout = 10 * time.Second
 	readTimeout     = 15 * time.Second
 	writeTimeout    = 15 * time.Second
@@ -22,6 +22,8 @@ const (
 )
 
 func main() {
+	config.ParseFlags()
+
 	if err := run(); err != nil {
 		slog.Error("ошибка запуска urlShortener сервиса", "error", err)
 		os.Exit(1)
@@ -33,7 +35,7 @@ func run() error {
 	handler := app.NewHTTPHandler()
 
 	httpServer := &http.Server{
-		Addr:         httpAddress,
+		Addr:         config.FlagRunAddr,
 		Handler:      handler,
 		ReadTimeout:  readTimeout,
 		WriteTimeout: writeTimeout,
@@ -42,7 +44,7 @@ func run() error {
 
 	// Запускаем HTTP-сервер в отдельной горутине.
 	go func() {
-		slog.Info("HTTP сервер запущен", "address", httpAddress)
+		slog.Info("HTTP сервер запущен", "address", config.FlagRunAddr)
 
 		if listenErr := httpServer.ListenAndServe(); listenErr != nil && !errors.Is(listenErr, http.ErrServerClosed) {
 			slog.Error("ошибка HTTP сервера", "error", listenErr)

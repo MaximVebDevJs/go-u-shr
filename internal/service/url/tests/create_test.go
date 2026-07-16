@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/MaximVebDevJs/go-u-shr/internal/config"
 	urlService "github.com/MaximVebDevJs/go-u-shr/internal/service/url"
 	"github.com/MaximVebDevJs/go-u-shr/internal/service/url/mocks"
 	"github.com/stretchr/testify/assert"
@@ -18,7 +19,7 @@ func TestCreateUrlService(t *testing.T) {
 	var (
 		ctx         = context.Background()
 		originalURL = "https://practicum.yandex.ru/"
-		baseURL     = "http://0.0.0.0:8080"
+		baseURL     = config.FlagHTTPAddr
 	)
 
 	tests := []struct {
