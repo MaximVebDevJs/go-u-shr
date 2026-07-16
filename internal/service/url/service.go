@@ -6,5 +6,5 @@ type service struct {
 }
 
 func New(urlRepo UrlRepository) *service {
-	return &service{urlRepo: urlRepo, baseURL: "0.0.0.0:8080"}
+	return &service{urlRepo: urlRepo, baseURL: "http://0.0.0.0:8080"}
 }
