@@ -2,15 +2,13 @@ package url
 
 import (
 	"context"
-
-	"github.com/MaximVebDevJs/go-u-shr/internal/model"
 )
 
-func (r *Repository) Create(_ context.Context, url model.Url) (model.Url, error) {
+func (r *Repository) Create(ctx context.Context, url string) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	r.urls[url.Url] = url
+	r.urls[url] = url
 
-	return url, nil
+	return nil
 }

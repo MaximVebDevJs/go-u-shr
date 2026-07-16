@@ -4,16 +4,15 @@ import (
 	"context"
 
 	errs "github.com/MaximVebDevJs/go-u-shr/internal/errors"
-	"github.com/MaximVebDevJs/go-u-shr/internal/model"
 )
 
-func (r *Repository) Get(_ context.Context, url string) (model.Url, error) {
+func (r *Repository) Get(ctx context.Context, id string) (string, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	rUrl, ok := r.urls[url]
+	rUrl, ok := r.urls[id]
 	if !ok {
-		return model.Url{}, errs.ErrUrlNotFound
+		return "", errs.ErrUrlNotFound
 	}
 
 	return rUrl, nil
