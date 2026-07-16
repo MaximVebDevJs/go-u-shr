@@ -6,13 +6,11 @@ import (
 )
 
 func (s *service) Create(ctx context.Context, originalURL string) (string, error) {
-	// логика originalURL
+	id := generateShortID()
 
-	urlAfterLogic := originalURL
-
-	if err := s.urlRepo.Create(ctx, urlAfterLogic); err != nil {
+	if err := s.urlRepo.Create(ctx, originalURL, id); err != nil {
 		return "", fmt.Errorf("сохранение url: %w", err)
 	}
 
-	return urlAfterLogic, nil
+	return s.baseURL + "/" + id, nil
 }
