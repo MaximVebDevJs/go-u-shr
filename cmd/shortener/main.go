@@ -22,20 +22,20 @@ const (
 )
 
 func main() {
-	config.ParseFlags()
+	cfg := config.Load()
 
-	if err := run(); err != nil {
+	if err := run(cfg); err != nil {
 		slog.Error("ошибка запуска urlShortener сервиса", "error", err)
 		os.Exit(1)
 	}
 }
 
-func run() error {
+func run(cfg *config.Config) error {
 	// Создать HTTP-обработчик через фабрику приложения.
-	handler := app.NewHTTPHandler()
+	handler := app.NewHTTPHandler(cfg.FlagHTTPAddr)
 
 	httpServer := &http.Server{
-		Addr:         config.FlagRunAddr,
+		Addr:         cfg.FlagRunAddr,
 		Handler:      handler,
 		ReadTimeout:  readTimeout,
 		WriteTimeout: writeTimeout,
@@ -44,7 +44,7 @@ func run() error {
 
 	// Запускаем HTTP-сервер в отдельной горутине.
 	go func() {
-		slog.Info("HTTP сервер запущен", "address", config.FlagRunAddr)
+		slog.Info("HTTP сервер запущен", "address", cfg.FlagRunAddr)
 
 		if listenErr := httpServer.ListenAndServe(); listenErr != nil && !errors.Is(listenErr, http.ErrServerClosed) {
 			slog.Error("ошибка HTTP сервера", "error", listenErr)

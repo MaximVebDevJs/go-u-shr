@@ -7,8 +7,8 @@ import (
 )
 
 func (r *Repository) Get(ctx context.Context, id string) (string, error) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
+	r.mu.RLock()
+	defer r.mu.RUnlock()
 
 	rUrl, ok := r.urls[id]
 	if !ok {

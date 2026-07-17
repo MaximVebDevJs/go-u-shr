@@ -19,6 +19,7 @@ func TestGetUrlService(t *testing.T) {
 		id  = "EwHXdJfB"
 
 		expectedURL = "https://practicum.yandex.ru/"
+		baseURL     = "http://localhost:8080"
 	)
 
 	tests := []struct {
@@ -62,7 +63,7 @@ func TestGetUrlService(t *testing.T) {
 				tc.setupMock(repo)
 			}
 
-			svc := urlService.New(repo)
+			svc := urlService.New(repo, baseURL)
 
 			result, err := svc.Get(ctx, tc.id)
 

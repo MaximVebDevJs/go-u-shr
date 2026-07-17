@@ -10,9 +10,9 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 )
 
-func NewHTTPHandler() http.Handler {
+func NewHTTPHandler(baseUrl string) http.Handler {
 	repo := urlRepo.New()
-	svc := urlService.New(repo)
+	svc := urlService.New(repo, baseUrl)
 	handler := apiUrlV1.New(svc)
 
 	r := chi.NewRouter()
