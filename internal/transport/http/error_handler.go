@@ -38,6 +38,8 @@ func mapError(err error) (int, string) {
 	// 400 Bad Request
 	case errors.Is(err, errs.ErrInvalidUrl):
 		return http.StatusBadRequest, err.Error()
+	case errors.Is(err, errs.ErrInvalidJSON):
+		return http.StatusBadRequest, err.Error()
 
 	// 500 Internal Server Error
 	default:

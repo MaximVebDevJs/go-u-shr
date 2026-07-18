@@ -10,9 +10,16 @@ func RegisterRoutes(r chi.Router, h *Handler) {
 		"/",
 		transporthttp.Wrap(h.CreateUrl, transporthttp.ErrorHandler),
 	)
-
 	r.Get(
 		"/{id}",
 		transporthttp.Wrap(h.GetUrl, transporthttp.ErrorHandler),
 	)
+	r.Route("/api/shorten", func(r chi.Router) {
+		r.Post(
+			"/",
+			transporthttp.Wrap(h.CreateUrlJSON, transporthttp.ErrorHandler))
+		r.Get(
+			"/{id}",
+			transporthttp.Wrap(h.GetUrl, transporthttp.ErrorHandler))
+	})
 }
