@@ -29,7 +29,7 @@ func DecompressMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-// CompressMiddleware запаковывает запрос
+// CompressMiddleware сжимает ответ
 func CompressMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if !strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
@@ -39,44 +39,64 @@ func CompressMiddleware(next http.Handler) http.Handler {
 
 		gzw := &gzipResponseWriter{
 			ResponseWriter: w,
-			gzipWriter:     gzip.NewWriter(w),
+			statusCode:     http.StatusOK,
 		}
-		defer gzw.gzipWriter.Close()
+		defer func() {
+			if gzw.gzipWriter != nil {
+				_ = gzw.gzipWriter.Close()
+			}
+		}()
 
 		next.ServeHTTP(gzw, r)
 	})
 }
 
-// gzipResponseWriter перехватывает запись ответа
-// и решает, нужно ли использовать gzip.
+// gzipResponseWriter решает,
+// нужно ли сжимать ответ.
 type gzipResponseWriter struct {
 	http.ResponseWriter
 
-	gzipWriter  *gzip.Writer
-	compressed  bool
-	headerWrote bool
+	gzipWriter *gzip.Writer
+
+	statusCode int
+
+	headerReceived bool
+	headerSent     bool
+	compressed     bool
 }
 
-// Write вызывается всеми обработчиками при записи ответа.
-// Здесь определяется Content-Type и принимается решение,
-// сжимать ответ или нет.
+// WriteHeader только запоминает статус.
+// Реальные заголовки отправляются при первом Write().
+func (g *gzipResponseWriter) WriteHeader(code int) {
+	if g.headerReceived {
+		return
+	}
+
+	g.statusCode = code
+	g.headerReceived = true
+}
+
+// Write отправляет заголовки и тело.
 func (g *gzipResponseWriter) Write(b []byte) (int, error) {
-	if !g.headerWrote {
-		g.headerWrote = true
 
-		// Если обработчик сам не указал Content-Type,
-		// определяем его автоматически.
-		if g.Header().Get("Content-Type") == "" {
-			g.Header().Set("Content-Type", http.DetectContentType(b))
-		}
+	// Если обработчик не указал Content-Type,
+	// определяем его автоматически.
+	if g.Header().Get("Content-Type") == "" {
+		g.Header().Set("Content-Type", http.DetectContentType(b))
+	}
 
-		if shouldCompress(g.Header().Get("Content-Type")) {
-			g.compressed = true
-			g.Header().Set("Content-Encoding", "gzip")
-			g.Header().Del("Content-Length")
-		}
+	if !g.compressed && shouldCompress(g.Header().Get("Content-Type")) {
+		g.compressed = true
 
-		g.ResponseWriter.WriteHeader(http.StatusOK)
+		g.Header().Set("Content-Encoding", "gzip")
+		g.Header().Del("Content-Length")
+
+		g.gzipWriter = gzip.NewWriter(g.ResponseWriter)
+	}
+
+	if !g.headerSent {
+		g.headerSent = true
+		g.ResponseWriter.WriteHeader(g.statusCode)
 	}
 
 	if g.compressed {
@@ -86,21 +106,9 @@ func (g *gzipResponseWriter) Write(b []byte) (int, error) {
 	return g.ResponseWriter.Write(b)
 }
 
-// WriteHeader нужен, чтобы корректно обработать случаи,
-// когда обработчик сам вызывает w.WriteHeader(...)
-// до записи тела ответа.
-func (g *gzipResponseWriter) WriteHeader(statusCode int) {
-	if g.headerWrote {
-		return
-	}
-
-	g.headerWrote = true
-	g.ResponseWriter.WriteHeader(statusCode)
-}
-
-// Flush поддерживает потоковую отправку ответа.
+// Flush поддерживает потоковую отправку.
 func (g *gzipResponseWriter) Flush() {
-	if g.compressed {
+	if g.gzipWriter != nil {
 		_ = g.gzipWriter.Flush()
 	}
 
@@ -110,7 +118,7 @@ func (g *gzipResponseWriter) Flush() {
 }
 
 // shouldCompress определяет,
-// нужно ли сжимать ответ данного Content-Type.
+// нужно ли сжимать данный тип контента.
 func shouldCompress(contentType string) bool {
 	return strings.Contains(contentType, "application/json") ||
 		strings.Contains(contentType, "text/html")
