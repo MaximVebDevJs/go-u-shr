@@ -18,7 +18,7 @@ func DecompressMiddleware(next http.Handler) http.Handler {
 
 		reader, err := gzip.NewReader(r.Body)
 		if err != nil {
-			http.Error(w, "invalid gzip body", http.StatusBadRequest)
+			http.Error(w, "передан невалидный gzip", http.StatusBadRequest)
 			return
 		}
 		defer reader.Close()
