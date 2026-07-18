@@ -1,0 +1,34 @@
+# .mockery.yaml
+# Конфигурация mockery v3.
+# Документация: https://vektra.github.io/mockery/latest/configuration/
+
+# Шаблон testify с expecter API.
+template: testify
+
+# Форматирование сгенерированного кода.
+formatter: goimports
+
+# Директория для сгенерированных моков (рядом с интерфейсом в подпапке mocks).
+dir: "{{.InterfaceDir}}/mocks"
+
+# Имя файла мока (snake_case через функцию snakecase).
+filename: "mock_{{ .InterfaceName | snakecase }}.go"
+
+# Имя пакета моков.
+pkgname: "mocks"
+
+# Имя структуры мока (совпадает с именем интерфейса).
+structname: "{{.InterfaceName}}"
+
+# Принудительная перезапись существующих файлов.
+force-file-write: true
+
+packages:
+  # Url service
+  github.com/MaximVebDevJs/go-u-shr/internal/handler/url/v1:
+    config:
+      include-interface-regex: ".*Service"
+  github.com/MaximVebDevJs/go-u-shr/internal/service/url:
+    config:
+      include-interface-regex: ".*Repository"
+
