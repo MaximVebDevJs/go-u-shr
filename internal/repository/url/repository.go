@@ -5,12 +5,18 @@ import (
 )
 
 type Repository struct {
-	mu   sync.RWMutex
-	urls map[string]string
+	mu       sync.RWMutex
+	urls     map[string]string
+	filePath string
 }
 
-func New() *Repository {
-	return &Repository{
-		urls: make(map[string]string),
+func New(filePath string) *Repository {
+	r := &Repository{
+		urls:     make(map[string]string),
+		filePath: filePath,
 	}
+
+	_ = r.load()
+
+	return r
 }
