@@ -7,7 +7,8 @@ import (
 	"strings"
 )
 
-// DecompressMiddleware распаковывает тело запроса, если оно сжато gzip
+// DecompressMiddleware распаковывает тело запроса,
+// если клиент прислал Content-Encoding: gzip.
 func DecompressMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if !strings.Contains(r.Header.Get("Content-Encoding"), "gzip") {
@@ -17,7 +18,7 @@ func DecompressMiddleware(next http.Handler) http.Handler {
 
 		reader, err := gzip.NewReader(r.Body)
 		if err != nil {
-			http.Error(w, "передан невалидный gzip", http.StatusBadRequest)
+			http.Error(w, "invalid gzip body", http.StatusBadRequest)
 			return
 		}
 		defer reader.Close()
@@ -29,7 +30,8 @@ func DecompressMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-// CompressMiddleware сжимает ответ
+// CompressMiddleware подменяет ResponseWriter,
+// если клиент поддерживает gzip.
 func CompressMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if !strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
@@ -39,7 +41,6 @@ func CompressMiddleware(next http.Handler) http.Handler {
 
 		gzw := &gzipResponseWriter{
 			ResponseWriter: w,
-			statusCode:     http.StatusOK,
 		}
 		defer func() {
 			if gzw.gzipWriter != nil {
@@ -51,52 +52,37 @@ func CompressMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-// gzipResponseWriter решает,
-// нужно ли сжимать ответ.
+// gzipResponseWriter сжимает только JSON и HTML.
 type gzipResponseWriter struct {
 	http.ResponseWriter
 
 	gzipWriter *gzip.Writer
-
-	statusCode int
-
-	headerReceived bool
-	headerSent     bool
-	compressed     bool
+	compressed bool
 }
 
-// WriteHeader только запоминает статус.
-// Реальные заголовки отправляются при первом Write().
+// WriteHeader вызывается обработчиком.
+// Если Content-Type уже известен и подходит,
+// включаем gzip до отправки заголовков.
 func (g *gzipResponseWriter) WriteHeader(code int) {
-	if g.headerReceived {
-		return
+	if shouldCompress(g.Header().Get("Content-Type")) {
+		g.enableCompression()
 	}
 
-	g.statusCode = code
-	g.headerReceived = true
+	g.ResponseWriter.WriteHeader(code)
 }
 
-// Write отправляет заголовки и тело.
+// Write записывает тело ответа.
+// Если обработчик не указал Content-Type,
+// определяем его автоматически.
 func (g *gzipResponseWriter) Write(b []byte) (int, error) {
+	if !g.compressed {
+		if g.Header().Get("Content-Type") == "" {
+			g.Header().Set("Content-Type", http.DetectContentType(b))
+		}
 
-	// Если обработчик не указал Content-Type,
-	// определяем его автоматически.
-	if g.Header().Get("Content-Type") == "" {
-		g.Header().Set("Content-Type", http.DetectContentType(b))
-	}
-
-	if !g.compressed && shouldCompress(g.Header().Get("Content-Type")) {
-		g.compressed = true
-
-		g.Header().Set("Content-Encoding", "gzip")
-		g.Header().Del("Content-Length")
-
-		g.gzipWriter = gzip.NewWriter(g.ResponseWriter)
-	}
-
-	if !g.headerSent {
-		g.headerSent = true
-		g.ResponseWriter.WriteHeader(g.statusCode)
+		if shouldCompress(g.Header().Get("Content-Type")) {
+			g.enableCompression()
+		}
 	}
 
 	if g.compressed {
@@ -106,9 +92,9 @@ func (g *gzipResponseWriter) Write(b []byte) (int, error) {
 	return g.ResponseWriter.Write(b)
 }
 
-// Flush поддерживает потоковую отправку.
+// Flush поддерживает потоковую отправку ответа.
 func (g *gzipResponseWriter) Flush() {
-	if g.gzipWriter != nil {
+	if g.compressed {
 		_ = g.gzipWriter.Flush()
 	}
 
@@ -117,8 +103,20 @@ func (g *gzipResponseWriter) Flush() {
 	}
 }
 
+// enableCompression включает gzip один раз.
+func (g *gzipResponseWriter) enableCompression() {
+	if g.compressed {
+		return
+	}
+
+	g.compressed = true
+	g.Header().Set("Content-Encoding", "gzip")
+	g.Header().Del("Content-Length")
+	g.gzipWriter = gzip.NewWriter(g.ResponseWriter)
+}
+
 // shouldCompress определяет,
-// нужно ли сжимать данный тип контента.
+// нужно ли сжимать данный Content-Type.
 func shouldCompress(contentType string) bool {
 	return strings.Contains(contentType, "application/json") ||
 		strings.Contains(contentType, "text/html")
