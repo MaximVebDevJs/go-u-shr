@@ -36,12 +36,10 @@ func CompressMiddleware(next http.Handler) http.Handler {
 		gz := gzip.NewWriter(w)
 		defer gz.Close()
 
-		w.Header().Set("Content-Encoding", "gzip")
-		w.Header().Del("Content-Length")
-
 		gzWriter := &gzipResponseWriter{
 			ResponseWriter: w,
-			Writer:         gz,
+			gzWriter:       gz,
+			useGzip:        true, // по умолчанию сжимаем
 		}
 		next.ServeHTTP(gzWriter, r)
 	})
@@ -50,19 +48,31 @@ func CompressMiddleware(next http.Handler) http.Handler {
 // gzipResponseWriter перехватывает запись и сжимает только если Content-Type допустим.
 type gzipResponseWriter struct {
 	http.ResponseWriter
-	Writer  io.Writer
-	written bool
+	gzWriter   *gzip.Writer
+	useGzip    bool
+	headerSent bool
 }
 
-func (g *gzipResponseWriter) Write(b []byte) (int, error) {
-	if !g.written {
+// WriteHeader вызывается перед отправкой заголовков, поэтому мы можем принять решение о сжатии.
+func (g *gzipResponseWriter) WriteHeader(code int) {
+	if !g.headerSent {
+		g.headerSent = true
 		contentType := g.Header().Get("Content-Type")
-		if !strings.Contains(contentType, "application/json") &&
-			!strings.Contains(contentType, "text/html") {
+		if !strings.Contains(contentType, "application/json") && !strings.Contains(contentType, "text/html") {
+			g.useGzip = false
 			g.Header().Del("Content-Encoding")
-			return g.ResponseWriter.Write(b)
 		}
-		g.written = true
 	}
-	return g.Writer.Write(b)
+	g.ResponseWriter.WriteHeader(code)
+}
+
+// Write переопределяет запись тела, используя соответствующий writer.
+func (g *gzipResponseWriter) Write(b []byte) (int, error) {
+	if !g.headerSent {
+		g.WriteHeader(http.StatusOK)
+	}
+	if g.useGzip {
+		return g.gzWriter.Write(b)
+	}
+	return g.ResponseWriter.Write(b)
 }
