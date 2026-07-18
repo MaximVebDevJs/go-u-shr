@@ -11,7 +11,9 @@ import (
 	"time"
 
 	"github.com/MaximVebDevJs/go-u-shr/internal/config"
+	"github.com/MaximVebDevJs/go-u-shr/internal/logger"
 	"github.com/MaximVebDevJs/go-u-shr/pkg/app"
+	"go.uber.org/zap"
 )
 
 const (
@@ -24,15 +26,22 @@ const (
 func main() {
 	cfg := config.Load()
 
-	if err := run(cfg); err != nil {
+	log, err := logger.New(cfg.LogLevel)
+	if err != nil {
+		slog.Error("не удалось инициализировать логер", "error", err)
+		os.Exit(1)
+	}
+	defer log.Sync()
+
+	if err = run(cfg, log); err != nil {
 		slog.Error("ошибка запуска urlShortener сервиса", "error", err)
 		os.Exit(1)
 	}
 }
 
-func run(cfg *config.Config) error {
+func run(cfg *config.Config, log *zap.Logger) error {
 	// Создать HTTP-обработчик через фабрику приложения.
-	handler := app.NewHTTPHandler(cfg.BaseURL)
+	handler := app.NewHTTPHandler(cfg.BaseURL, log)
 
 	httpServer := &http.Server{
 		Addr:         cfg.ServerAddr,
@@ -44,10 +53,10 @@ func run(cfg *config.Config) error {
 
 	// Запускаем HTTP-сервер в отдельной горутине.
 	go func() {
-		slog.Info("HTTP сервер запущен", "address", cfg.ServerAddr)
+		log.Info("HTTP сервер запущен", zap.String("address", cfg.ServerAddr))
 
 		if listenErr := httpServer.ListenAndServe(); listenErr != nil && !errors.Is(listenErr, http.ErrServerClosed) {
-			slog.Error("ошибка HTTP сервера", "error", listenErr)
+			log.Error("ошибка HTTP сервера", zap.Error(listenErr))
 		}
 	}()
 
@@ -56,16 +65,16 @@ func run(cfg *config.Config) error {
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 
-	slog.Info("остановка urlShortener")
+	log.Info("остановка urlShortener")
 
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
 	defer cancel()
 
 	if shutdownErr := httpServer.Shutdown(shutdownCtx); shutdownErr != nil {
-		slog.Error("ошибка остановки HTTP сервера", "error", shutdownErr)
+		log.Error("ошибка остановки HTTP сервера", zap.Error(shutdownErr))
 	}
 
-	slog.Info("urlShortener остановлен")
+	log.Info("urlShortener остановлен")
 
 	return nil
 }

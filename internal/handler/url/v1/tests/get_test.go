@@ -8,6 +8,7 @@ import (
 	errs "github.com/MaximVebDevJs/go-u-shr/internal/errors"
 	apiUrlV1 "github.com/MaximVebDevJs/go-u-shr/internal/handler/url/v1"
 	"github.com/MaximVebDevJs/go-u-shr/internal/handler/url/v1/mocks"
+	"github.com/MaximVebDevJs/go-u-shr/internal/logger"
 	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -54,7 +55,7 @@ func TestGetUrlHandler(t *testing.T) {
 				tc.setupMock(svc)
 			}
 
-			apiHandler := apiUrlV1.New(svc)
+			apiHandler := apiUrlV1.New(svc, logger.Nop())
 
 			r := chi.NewRouter()
 			apiUrlV1.RegisterRoutes(r, apiHandler)
