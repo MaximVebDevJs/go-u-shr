@@ -2,6 +2,7 @@ package url
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 )
 
@@ -28,7 +29,17 @@ func (r *Repository) save() error {
 		return err
 	}
 
-	return os.WriteFile(r.filePath, data, 0644)
+	tmpPath := r.filePath + ".tmp"
+
+	if err = os.WriteFile(tmpPath, data, 0644); err != nil {
+		return fmt.Errorf("запись во временный файл: %w", err)
+	}
+
+	if err = os.Rename(tmpPath, r.filePath); err != nil {
+		return fmt.Errorf("работа с основным файлом: %w", err)
+	}
+
+	return nil
 }
 
 // load загружает сохранённые URL из JSON-файла при запуске сервера.

@@ -2,10 +2,11 @@ package v1
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 
-	errs "github.com/MaximVebDevJs/go-u-shr/internal/errors"
+	serviceurl "github.com/MaximVebDevJs/go-u-shr/internal/service/url"
 	"go.uber.org/zap"
 )
 
@@ -21,28 +22,21 @@ type shortenResponse struct {
 func (h *Handler) CreateUrlJSON(w http.ResponseWriter, r *http.Request) error {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		h.logger.Error("не удалось прочитать тело запроса", zap.Error(err))
-		return err
+		return fmt.Errorf("не удалось прочитать тело запроса: %w", err)
 	}
 
 	var req shortenRequest
 	if err = json.Unmarshal(body, &req); err != nil {
-		h.logger.Error("передан невалидный JSON", zap.Error(err))
-		return errs.ErrInvalidJSON
+		return serviceurl.ErrInvalidJSON
 	}
 
 	if req.URL == "" {
-		h.logger.Error("передана пустая ссылка", zap.String("url", req.URL))
-		return errs.ErrInvalidUrl
+		return serviceurl.ErrInvalidUrl
 	}
 
 	shortURL, err := h.urlService.Create(r.Context(), req.URL)
 	if err != nil {
-		h.logger.Error("ошибка создания короткой ссылки",
-			zap.Error(err),
-			zap.String("original_url", string(body)),
-		)
-		return err
+		return fmt.Errorf("ошибка создания короткой ссылки: %w", err)
 	}
 
 	h.logger.Info("короткая ссылка успешно создана",

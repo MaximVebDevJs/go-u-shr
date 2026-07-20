@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -13,12 +14,7 @@ func (h *Handler) GetUrl(w http.ResponseWriter, r *http.Request) error {
 
 	originalURL, err := h.urlService.Get(r.Context(), id)
 	if err != nil {
-		h.logger.Error("ошибка получения короткой ссылки",
-			zap.Error(err),
-			zap.String("link_id", id),
-		)
-
-		return err
+		return fmt.Errorf("ошибка получения короткой ссылки: %w", err)
 	}
 
 	h.logger.Info("короткая ссылка успешно получена",

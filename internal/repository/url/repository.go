@@ -10,13 +10,15 @@ type Repository struct {
 	filePath string
 }
 
-func New(filePath string) *Repository {
+func New(filePath string) (*Repository, error) {
 	r := &Repository{
 		urls:     make(map[string]string),
 		filePath: filePath,
 	}
 
-	_ = r.load()
+	if err := r.load(); err != nil {
+		return nil, err
+	}
 
-	return r
+	return r, nil
 }

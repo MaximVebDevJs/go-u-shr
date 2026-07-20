@@ -20,16 +20,16 @@ func Load() *Config {
 	flag.StringVar(&fileStoragePath, "f", "storage.json", "file storage path")
 	flag.Parse()
 
-	if envAddr := os.Getenv("SERVER_ADDRESS"); envAddr != "" {
+	if envAddr, ok := os.LookupEnv("SERVER_ADDRESS"); ok {
 		serverAddr = envAddr
 	}
-	if envBase := os.Getenv("BASE_URL"); envBase != "" {
+	if envBase, ok := os.LookupEnv("BASE_URL"); ok {
 		baseURL = envBase
 	}
-	if envLog := os.Getenv("LOG_LEVEL"); envLog != "" {
+	if envLog, ok := os.LookupEnv("LOG_LEVEL"); ok {
 		logLevel = envLog
 	}
-	if envPath := os.Getenv("FILE_STORAGE_PATH"); envPath != "" {
+	if envPath, ok := os.LookupEnv("FILE_STORAGE_PATH"); ok {
 		fileStoragePath = envPath
 	}
 

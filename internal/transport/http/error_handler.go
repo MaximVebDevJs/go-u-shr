@@ -4,10 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"log/slog"
 	"net/http"
 
-	errs "github.com/MaximVebDevJs/go-u-shr/internal/errors"
+	svc "github.com/MaximVebDevJs/go-u-shr/internal/service/url"
+
+	"go.uber.org/zap"
 )
 
 type errorResponse struct {
@@ -15,8 +16,14 @@ type errorResponse struct {
 	Code    int    `json:"code"`
 }
 
-func ErrorHandler(ctx context.Context, w http.ResponseWriter, _ *http.Request, err error) {
+func ErrorHandler(ctx context.Context, logger *zap.Logger, w http.ResponseWriter, _ *http.Request, err error) {
 	code, message := mapError(err)
+
+	logger.Error(
+		"ошибка запроса",
+		zap.Error(err),
+		zap.Int("status", code),
+	)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
@@ -25,20 +32,23 @@ func ErrorHandler(ctx context.Context, w http.ResponseWriter, _ *http.Request, e
 		Code:    code,
 		Message: message,
 	}); encErr != nil {
-		slog.ErrorContext(ctx, "ошибка кодирования ответа", "error", encErr)
+		logger.Error(
+			"ошибка кодирования ответа",
+			zap.Error(err),
+		)
 	}
 }
 
 func mapError(err error) (int, string) {
 	switch {
 	// 404 Not Found
-	case errors.Is(err, errs.ErrUrlNotFound):
+	case errors.Is(err, svc.ErrUrlNotFound):
 		return http.StatusNotFound, err.Error()
 
 	// 400 Bad Request
-	case errors.Is(err, errs.ErrInvalidUrl):
+	case errors.Is(err, svc.ErrInvalidUrl):
 		return http.StatusBadRequest, err.Error()
-	case errors.Is(err, errs.ErrInvalidJSON):
+	case errors.Is(err, svc.ErrInvalidJSON):
 		return http.StatusBadRequest, err.Error()
 
 	// 500 Internal Server Error
