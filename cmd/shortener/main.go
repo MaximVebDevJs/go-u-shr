@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
@@ -12,7 +13,9 @@ import (
 
 	"github.com/MaximVebDevJs/go-u-shr/internal/config"
 	"github.com/MaximVebDevJs/go-u-shr/internal/logger"
+	urlRepo "github.com/MaximVebDevJs/go-u-shr/internal/repository/url"
 	"github.com/MaximVebDevJs/go-u-shr/pkg/app"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/zap"
 )
 
@@ -33,17 +36,36 @@ func main() {
 	}
 	defer log.Sync()
 
-	if err = run(cfg, log); err != nil {
+	ctx := context.Background()
+
+	pool, err := pgxpool.New(ctx, cfg.DatabaseDSN)
+	if err != nil {
+		slog.Error("создание пула соединений", "error", err)
+		os.Exit(1)
+	}
+	defer pool.Close()
+
+	if err = pool.Ping(ctx); err != nil {
+		slog.Error("проверка удалось ли подключиться к базе данных", "error", err)
+		os.Exit(1)
+	}
+
+	if err = urlRepo.Migrate(ctx, pool); err != nil {
+		slog.Error("миграция базы данных", "error", err)
+		os.Exit(1)
+	}
+
+	if err = run(cfg, log, pool); err != nil {
 		slog.Error("ошибка запуска urlShortener сервиса", "error", err)
 		os.Exit(1)
 	}
 }
 
-func run(cfg *config.Config, log *zap.Logger) error {
+func run(cfg *config.Config, log *zap.Logger, pool *pgxpool.Pool) error {
 	// Создать HTTP-обработчик через фабрику приложения.
-	handler, err := app.NewHTTPHandler(cfg, log)
+	handler, err := app.NewHTTPHandler(cfg, log, pool)
 	if err != nil {
-		log.Fatal("не удалось создать HTTP handler", zap.Error(err))
+		return fmt.Errorf("создание HTTP handler: %w", err)
 	}
 
 	httpServer := &http.Server{

@@ -50,9 +50,14 @@ func mapError(err error) (int, string) {
 		return http.StatusBadRequest, err.Error()
 	case errors.Is(err, svc.ErrInvalidJSON):
 		return http.StatusBadRequest, err.Error()
+	}
+
+	// 413 Payload Too Large — срабатывает при превышении MaxBytesReader.
+	var maxBytesErr *http.MaxBytesError
+	if errors.As(err, &maxBytesErr) {
+		return http.StatusRequestEntityTooLarge, "слишком большое тело запроса"
+	}
 
 	// 500 Internal Server Error
-	default:
-		return http.StatusInternalServerError, "внутренняя ошибка"
-	}
+	return http.StatusInternalServerError, "внутренняя ошибка"
 }

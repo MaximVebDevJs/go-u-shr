@@ -2,16 +2,25 @@ package url
 
 import (
 	"context"
+	"fmt"
 )
 
 func (r *Repository) Get(ctx context.Context, id string) (string, error) {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
-
-	rUrl, ok := r.urls[id]
-	if !ok {
-		return "", ErrNotFound
+	// (например, клиент закрыл соединение или вышел таймаут).
+	if err := ctx.Err(); err != nil {
+		return "", fmt.Errorf("получить запись: %w", err)
 	}
 
-	return rUrl, nil
+	const query = `
+		SELECT original_url FROM urls WHERE uuid = $1
+	`
+
+	var originalURL string
+
+	err := r.getter.DefaultTrOrDB(ctx, r.pool).QueryRow(ctx, query, id).Scan(&originalURL)
+	if err != nil {
+		return "", mapGetError(err)
+	}
+
+	return originalURL, nil
 }

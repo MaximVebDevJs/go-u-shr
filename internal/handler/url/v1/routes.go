@@ -12,6 +12,10 @@ func RegisterRoutes(r chi.Router, h *Handler, log *zap.Logger) {
 		transporthttp.Wrap(h.CreateUrl, transporthttp.ErrorHandler, log),
 	)
 	r.Get(
+		"/ping",
+		transporthttp.Wrap(h.Ping, transporthttp.ErrorHandler, log),
+	)
+	r.Get(
 		"/{id}",
 		transporthttp.Wrap(h.GetUrl, transporthttp.ErrorHandler, log),
 	)

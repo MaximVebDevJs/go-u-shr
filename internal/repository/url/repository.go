@@ -1,24 +1,18 @@
 package url
 
 import (
-	"sync"
+	trmpgx "github.com/avito-tech/go-transaction-manager/drivers/pgxv5/v2"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type Repository struct {
-	mu       sync.RWMutex
-	urls     map[string]string
-	filePath string
+	pool   *pgxpool.Pool
+	getter *trmpgx.CtxGetter
 }
 
-func New(filePath string) (*Repository, error) {
-	r := &Repository{
-		urls:     make(map[string]string),
-		filePath: filePath,
+func New(pool *pgxpool.Pool) *Repository {
+	return &Repository{
+		pool:   pool,
+		getter: trmpgx.DefaultCtxGetter,
 	}
-
-	if err := r.load(); err != nil {
-		return nil, err
-	}
-
-	return r, nil
 }

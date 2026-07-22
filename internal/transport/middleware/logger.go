@@ -17,10 +17,17 @@ func (rw *responseWriter) WriteHeader(code int) {
 	rw.status = code
 	rw.ResponseWriter.WriteHeader(code)
 }
+
 func (rw *responseWriter) Write(b []byte) (int, error) {
 	size, err := rw.ResponseWriter.Write(b)
 	rw.size += size
+
 	return size, err
+}
+
+// Unwrap нужен chi Recoverer и другим middleware, которые ищут http.Flusher/Hijacker ниже по цепочке.
+func (rw *responseWriter) Unwrap() http.ResponseWriter {
+	return rw.ResponseWriter
 }
 
 func RequestLogger(log *zap.Logger) func(next http.Handler) http.Handler {
@@ -33,7 +40,7 @@ func RequestLogger(log *zap.Logger) func(next http.Handler) http.Handler {
 
 			log.Info("HTTP request",
 				zap.String("method", r.Method),
-				zap.String("path", r.RequestURI),
+				zap.String("path", r.URL.Path),
 				zap.Int("status", rw.status),
 				zap.Int("size", rw.size),
 				zap.Duration("duration", time.Since(start)),
