@@ -1,4 +1,4 @@
-package logger
+package middleware
 
 import (
 	"net/http"
@@ -33,7 +33,7 @@ func RequestLogger(log *zap.Logger) func(next http.Handler) http.Handler {
 
 			log.Info("HTTP request",
 				zap.String("method", r.Method),
-				zap.String("path", r.URL.Path),
+				zap.String("path", r.RequestURI),
 				zap.Int("status", rw.status),
 				zap.Int("size", rw.size),
 				zap.Duration("duration", time.Since(start)),

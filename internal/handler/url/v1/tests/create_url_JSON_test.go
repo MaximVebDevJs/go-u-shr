@@ -9,7 +9,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	errs "github.com/MaximVebDevJs/go-u-shr/internal/errors"
+	serviceurl "github.com/MaximVebDevJs/go-u-shr/internal/service/url"
+
 	apiUrlV1 "github.com/MaximVebDevJs/go-u-shr/internal/handler/url/v1"
 	"github.com/MaximVebDevJs/go-u-shr/internal/handler/url/v1/mocks"
 	"github.com/MaximVebDevJs/go-u-shr/internal/logger"
@@ -51,7 +52,7 @@ func TestCreateUrlJSONHandler(t *testing.T) {
 			setupMock:    func(svc *mocks.UrlService) {},
 			expectedCode: http.StatusBadRequest,
 			expectedBody: map[string]interface{}{
-				"message": errs.ErrInvalidUrl.Error(),
+				"message": serviceurl.ErrInvalidUrl.Error(),
 				"code":    float64(http.StatusBadRequest),
 			},
 		},
@@ -61,7 +62,7 @@ func TestCreateUrlJSONHandler(t *testing.T) {
 			setupMock:    func(svc *mocks.UrlService) {},
 			expectedCode: http.StatusBadRequest,
 			expectedBody: map[string]interface{}{
-				"message": errs.ErrInvalidJSON.Error(),
+				"message": serviceurl.ErrInvalidJSON.Error(),
 				"code":    float64(http.StatusBadRequest),
 			},
 		},
@@ -109,7 +110,7 @@ func TestCreateUrlJSONHandler(t *testing.T) {
 
 			rec := httptest.NewRecorder()
 
-			handler := transporthttp.Wrap(apiHandler.CreateUrlJSON, transporthttp.ErrorHandler)
+			handler := transporthttp.Wrap(apiHandler.CreateUrlJSON, transporthttp.ErrorHandler, log)
 			handler.ServeHTTP(rec, req)
 
 			assert.Equal(t, tc.expectedCode, rec.Code)

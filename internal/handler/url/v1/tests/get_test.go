@@ -5,10 +5,10 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	errs "github.com/MaximVebDevJs/go-u-shr/internal/errors"
 	apiUrlV1 "github.com/MaximVebDevJs/go-u-shr/internal/handler/url/v1"
 	"github.com/MaximVebDevJs/go-u-shr/internal/handler/url/v1/mocks"
 	"github.com/MaximVebDevJs/go-u-shr/internal/logger"
+	serviceurl "github.com/MaximVebDevJs/go-u-shr/internal/service/url"
 	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -39,7 +39,7 @@ func TestGetUrlHandler(t *testing.T) {
 		{
 			name: "Урл не найден",
 			setupMock: func(svc *mocks.UrlService) {
-				svc.EXPECT().Get(mock.Anything, id).Return("", errs.ErrUrlNotFound)
+				svc.EXPECT().Get(mock.Anything, id).Return("", serviceurl.ErrUrlNotFound)
 			},
 			expectedCode: http.StatusNotFound,
 			expectedURL:  "",
@@ -55,10 +55,11 @@ func TestGetUrlHandler(t *testing.T) {
 				tc.setupMock(svc)
 			}
 
-			apiHandler := apiUrlV1.New(svc, logger.Nop())
+			log := logger.Nop()
+			apiHandler := apiUrlV1.New(svc, log)
 
 			r := chi.NewRouter()
-			apiUrlV1.RegisterRoutes(r, apiHandler)
+			apiUrlV1.RegisterRoutes(r, apiHandler, log)
 
 			req := httptest.NewRequest(
 				http.MethodGet,

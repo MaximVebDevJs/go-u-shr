@@ -41,7 +41,10 @@ func main() {
 
 func run(cfg *config.Config, log *zap.Logger) error {
 	// Создать HTTP-обработчик через фабрику приложения.
-	handler := app.NewHTTPHandler(cfg.BaseURL, log)
+	handler, err := app.NewHTTPHandler(cfg, log)
+	if err != nil {
+		log.Fatal("не удалось создать HTTP handler", zap.Error(err))
+	}
 
 	httpServer := &http.Server{
 		Addr:         cfg.ServerAddr,

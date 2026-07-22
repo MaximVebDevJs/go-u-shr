@@ -1,10 +1,11 @@
 package app
 
 import (
+	"fmt"
 	"net/http"
 
+	"github.com/MaximVebDevJs/go-u-shr/internal/config"
 	apiUrlV1 "github.com/MaximVebDevJs/go-u-shr/internal/handler/url/v1"
-	"github.com/MaximVebDevJs/go-u-shr/internal/logger"
 	urlRepo "github.com/MaximVebDevJs/go-u-shr/internal/repository/url"
 	urlService "github.com/MaximVebDevJs/go-u-shr/internal/service/url"
 	"github.com/MaximVebDevJs/go-u-shr/internal/transport/middleware"
@@ -12,17 +13,21 @@ import (
 	"go.uber.org/zap"
 )
 
-func NewHTTPHandler(baseUrl string, log *zap.Logger) http.Handler {
-	repo := urlRepo.New()
-	svc := urlService.New(repo, baseUrl)
+func NewHTTPHandler(cfg *config.Config, log *zap.Logger) (http.Handler, error) {
+	repo, err := urlRepo.New(cfg.FileStoragePath)
+	if err != nil {
+		return nil, fmt.Errorf("создание файлового хранилища: %w", err)
+	}
+
+	svc := urlService.New(repo, cfg.BaseURL)
 	handler := apiUrlV1.New(svc, log)
 
 	r := chi.NewRouter()
 	r.Use(middleware.DecompressMiddleware)
 	r.Use(middleware.CompressMiddleware)
-	r.Use(logger.RequestLogger(log))
+	r.Use(middleware.RequestLogger(log))
 
-	apiUrlV1.RegisterRoutes(r, handler)
+	apiUrlV1.RegisterRoutes(r, handler, log)
 
-	return r
+	return r, nil
 }
