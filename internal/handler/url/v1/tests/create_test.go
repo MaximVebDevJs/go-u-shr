@@ -9,6 +9,7 @@ import (
 
 	apiUrlV1 "github.com/MaximVebDevJs/go-u-shr/internal/handler/url/v1"
 	"github.com/MaximVebDevJs/go-u-shr/internal/handler/url/v1/mocks"
+	"github.com/MaximVebDevJs/go-u-shr/internal/logger"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -57,7 +58,7 @@ func TestCreateUrlHandler(t *testing.T) {
 				tc.setupMock(svc)
 			}
 
-			apiHandler := apiUrlV1.New(svc)
+			apiHandler := apiUrlV1.New(svc, logger.Nop())
 
 			req := httptest.NewRequest(
 				http.MethodPost,

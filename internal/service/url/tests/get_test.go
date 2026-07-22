@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	errs "github.com/MaximVebDevJs/go-u-shr/internal/errors"
+	errs "github.com/MaximVebDevJs/go-u-shr/internal/service/url"
 	urlService "github.com/MaximVebDevJs/go-u-shr/internal/service/url"
 	"github.com/MaximVebDevJs/go-u-shr/internal/service/url/mocks"
 	"github.com/stretchr/testify/assert"

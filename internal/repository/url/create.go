@@ -10,5 +10,5 @@ func (r *Repository) Create(ctx context.Context, originalUrl string, id string) 
 
 	r.urls[id] = originalUrl
 
-	return nil
+	return r.save()
 }
