@@ -7,6 +7,7 @@ package mocks
 import (
 	"context"
 
+	"github.com/MaximVebDevJs/go-u-shr/internal/service/url"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -35,6 +36,63 @@ type UrlService_Expecter struct {
 
 func (_m *UrlService) EXPECT() *UrlService_Expecter {
 	return &UrlService_Expecter{mock: &_m.Mock}
+}
+
+// BatchCreate provides a mock function for the type UrlService
+func (_mock *UrlService) BatchCreate(ctx context.Context, items []url.BatchItem) ([]url.BatchResult, error) {
+	ret := _mock.Called(ctx, items)
+
+	if len(ret) == 0 {
+		panic("no return value specified for BatchCreate")
+	}
+
+	var r0 []url.BatchResult
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, []url.BatchItem) ([]url.BatchResult, error)); ok {
+		return returnFunc(ctx, items)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, []url.BatchItem) []url.BatchResult); ok {
+		r0 = returnFunc(ctx, items)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]url.BatchResult)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, []url.BatchItem) error); ok {
+		r1 = returnFunc(ctx, items)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// UrlService_BatchCreate_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'BatchCreate'
+type UrlService_BatchCreate_Call struct {
+	*mock.Call
+}
+
+// BatchCreate is a helper method to define mock.On call
+//   - ctx
+//   - items
+func (_e *UrlService_Expecter) BatchCreate(ctx interface{}, items interface{}) *UrlService_BatchCreate_Call {
+	return &UrlService_BatchCreate_Call{Call: _e.mock.On("BatchCreate", ctx, items)}
+}
+
+func (_c *UrlService_BatchCreate_Call) Run(run func(ctx context.Context, items []url.BatchItem)) *UrlService_BatchCreate_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].([]url.BatchItem))
+	})
+	return _c
+}
+
+func (_c *UrlService_BatchCreate_Call) Return(batchResults []url.BatchResult, err error) *UrlService_BatchCreate_Call {
+	_c.Call.Return(batchResults, err)
+	return _c
+}
+
+func (_c *UrlService_BatchCreate_Call) RunAndReturn(run func(ctx context.Context, items []url.BatchItem) ([]url.BatchResult, error)) *UrlService_BatchCreate_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // Create provides a mock function for the type UrlService
@@ -69,26 +127,15 @@ type UrlService_Create_Call struct {
 }
 
 // Create is a helper method to define mock.On call
-//   - ctx context.Context
-//   - originalURL string
+//   - ctx
+//   - originalURL
 func (_e *UrlService_Expecter) Create(ctx interface{}, originalURL interface{}) *UrlService_Create_Call {
 	return &UrlService_Create_Call{Call: _e.mock.On("Create", ctx, originalURL)}
 }
 
 func (_c *UrlService_Create_Call) Run(run func(ctx context.Context, originalURL string)) *UrlService_Create_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 string
-		if args[1] != nil {
-			arg1 = args[1].(string)
-		}
-		run(
-			arg0,
-			arg1,
-		)
+		run(args[0].(context.Context), args[1].(string))
 	})
 	return _c
 }
@@ -135,26 +182,15 @@ type UrlService_Get_Call struct {
 }
 
 // Get is a helper method to define mock.On call
-//   - ctx context.Context
-//   - id string
+//   - ctx
+//   - id
 func (_e *UrlService_Expecter) Get(ctx interface{}, id interface{}) *UrlService_Get_Call {
 	return &UrlService_Get_Call{Call: _e.mock.On("Get", ctx, id)}
 }
 
 func (_c *UrlService_Get_Call) Run(run func(ctx context.Context, id string)) *UrlService_Get_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 string
-		if args[1] != nil {
-			arg1 = args[1].(string)
-		}
-		run(
-			arg0,
-			arg1,
-		)
+		run(args[0].(context.Context), args[1].(string))
 	})
 	return _c
 }
@@ -192,18 +228,14 @@ type UrlService_Ping_Call struct {
 }
 
 // Ping is a helper method to define mock.On call
-//   - ctx context.Context
+//   - ctx
 func (_e *UrlService_Expecter) Ping(ctx interface{}) *UrlService_Ping_Call {
 	return &UrlService_Ping_Call{Call: _e.mock.On("Ping", ctx)}
 }
 
 func (_c *UrlService_Ping_Call) Run(run func(ctx context.Context)) *UrlService_Ping_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		run(arg0)
+		run(args[0].(context.Context))
 	})
 	return _c
 }

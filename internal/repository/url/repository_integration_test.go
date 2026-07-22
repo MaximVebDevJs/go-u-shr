@@ -85,6 +85,24 @@ func TestRepositoryGetNotFound(t *testing.T) {
 	assert.ErrorIs(t, err, urlRepo.ErrNotFound)
 }
 
+func TestRepositoryCreateBatchAndGet(t *testing.T) {
+	ctx := context.Background()
+	repo, _ := setupTestRepository(t)
+
+	records := []urlRepo.BatchRecord{
+		{OriginalURL: "https://example.com/a", ID: "batch0001"},
+		{OriginalURL: "https://example.com/b", ID: "batch0002"},
+	}
+
+	require.NoError(t, repo.CreateBatch(ctx, records))
+
+	for _, record := range records {
+		got, err := repo.Get(ctx, record.ID)
+		require.NoError(t, err)
+		assert.Equal(t, record.OriginalURL, got)
+	}
+}
+
 func TestRepositoryCreateDuplicateReturnsError(t *testing.T) {
 	ctx := context.Background()
 	repo, _ := setupTestRepository(t)

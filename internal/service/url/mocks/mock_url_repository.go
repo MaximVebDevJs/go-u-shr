@@ -7,6 +7,7 @@ package mocks
 import (
 	"context"
 
+	"github.com/MaximVebDevJs/go-u-shr/internal/repository/url"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -60,32 +61,16 @@ type UrlRepository_Create_Call struct {
 }
 
 // Create is a helper method to define mock.On call
-//   - ctx context.Context
-//   - originalURL string
-//   - id string
+//   - ctx
+//   - originalURL
+//   - id
 func (_e *UrlRepository_Expecter) Create(ctx interface{}, originalURL interface{}, id interface{}) *UrlRepository_Create_Call {
 	return &UrlRepository_Create_Call{Call: _e.mock.On("Create", ctx, originalURL, id)}
 }
 
 func (_c *UrlRepository_Create_Call) Run(run func(ctx context.Context, originalURL string, id string)) *UrlRepository_Create_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 string
-		if args[1] != nil {
-			arg1 = args[1].(string)
-		}
-		var arg2 string
-		if args[2] != nil {
-			arg2 = args[2].(string)
-		}
-		run(
-			arg0,
-			arg1,
-			arg2,
-		)
+		run(args[0].(context.Context), args[1].(string), args[2].(string))
 	})
 	return _c
 }
@@ -96,6 +81,52 @@ func (_c *UrlRepository_Create_Call) Return(err error) *UrlRepository_Create_Cal
 }
 
 func (_c *UrlRepository_Create_Call) RunAndReturn(run func(ctx context.Context, originalURL string, id string) error) *UrlRepository_Create_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// CreateBatch provides a mock function for the type UrlRepository
+func (_mock *UrlRepository) CreateBatch(ctx context.Context, records []url.BatchRecord) error {
+	ret := _mock.Called(ctx, records)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreateBatch")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, []url.BatchRecord) error); ok {
+		r0 = returnFunc(ctx, records)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// UrlRepository_CreateBatch_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateBatch'
+type UrlRepository_CreateBatch_Call struct {
+	*mock.Call
+}
+
+// CreateBatch is a helper method to define mock.On call
+//   - ctx
+//   - records
+func (_e *UrlRepository_Expecter) CreateBatch(ctx interface{}, records interface{}) *UrlRepository_CreateBatch_Call {
+	return &UrlRepository_CreateBatch_Call{Call: _e.mock.On("CreateBatch", ctx, records)}
+}
+
+func (_c *UrlRepository_CreateBatch_Call) Run(run func(ctx context.Context, records []url.BatchRecord)) *UrlRepository_CreateBatch_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].([]url.BatchRecord))
+	})
+	return _c
+}
+
+func (_c *UrlRepository_CreateBatch_Call) Return(err error) *UrlRepository_CreateBatch_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *UrlRepository_CreateBatch_Call) RunAndReturn(run func(ctx context.Context, records []url.BatchRecord) error) *UrlRepository_CreateBatch_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -132,26 +163,15 @@ type UrlRepository_Get_Call struct {
 }
 
 // Get is a helper method to define mock.On call
-//   - ctx context.Context
-//   - id string
+//   - ctx
+//   - id
 func (_e *UrlRepository_Expecter) Get(ctx interface{}, id interface{}) *UrlRepository_Get_Call {
 	return &UrlRepository_Get_Call{Call: _e.mock.On("Get", ctx, id)}
 }
 
 func (_c *UrlRepository_Get_Call) Run(run func(ctx context.Context, id string)) *UrlRepository_Get_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 string
-		if args[1] != nil {
-			arg1 = args[1].(string)
-		}
-		run(
-			arg0,
-			arg1,
-		)
+		run(args[0].(context.Context), args[1].(string))
 	})
 	return _c
 }
@@ -189,18 +209,14 @@ type UrlRepository_Ping_Call struct {
 }
 
 // Ping is a helper method to define mock.On call
-//   - ctx context.Context
+//   - ctx
 func (_e *UrlRepository_Expecter) Ping(ctx interface{}) *UrlRepository_Ping_Call {
 	return &UrlRepository_Ping_Call{Call: _e.mock.On("Ping", ctx)}
 }
 
 func (_c *UrlRepository_Ping_Call) Run(run func(ctx context.Context)) *UrlRepository_Ping_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		run(arg0)
+		run(args[0].(context.Context))
 	})
 	return _c
 }
