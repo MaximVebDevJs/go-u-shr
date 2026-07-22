@@ -23,6 +23,9 @@ func RegisterRoutes(r chi.Router, h *Handler, log *zap.Logger) {
 		r.Post(
 			"/",
 			transporthttp.Wrap(h.CreateUrlJSON, transporthttp.ErrorHandler, log))
+		r.Post(
+			"/batch",
+			transporthttp.Wrap(h.BatchUrls, transporthttp.ErrorHandler, log))
 		r.Get(
 			"/{id}",
 			transporthttp.Wrap(h.GetUrl, transporthttp.ErrorHandler, log))
