@@ -44,6 +44,10 @@ func (s *service) BatchCreate(ctx context.Context, items []BatchItem) ([]BatchRe
 	}
 
 	// При коллизии uuid в БД — перегенерируем весь батч и повторяем (как в Create).
+	if duplicateURLs := findInBatchDuplicateURLs(items); len(duplicateURLs) > 0 {
+		return nil, &DuplicateURLsError{URLs: duplicateURLs}
+	}
+
 	for range maxIDGenerationAttempts {
 		// собираем записи и результаты
 		records, results, err := s.buildBatchRecords(items)
@@ -57,7 +61,11 @@ func (s *service) BatchCreate(ctx context.Context, items []BatchItem) ([]BatchRe
 			return results, nil
 		}
 
-		// Коллизия ID с уже существующей записью — пробуем новый набор alias.
+		var duplicateRepo *urlRepo.DuplicateOriginalURLsError
+		if errors.As(err, &duplicateRepo) {
+			return nil, &DuplicateURLsError{URLs: duplicateRepo.URLs}
+		}
+
 		if errors.Is(err, urlRepo.ErrAlreadyExists) {
 			continue
 		}
@@ -71,7 +79,22 @@ func (s *service) BatchCreate(ctx context.Context, items []BatchItem) ([]BatchRe
 	)
 }
 
-// buildBatchRecords генерирует shortUrl для каждого элемента и собирает записи для репозитория.
+func findInBatchDuplicateURLs(items []BatchItem) []string {
+	counts := make(map[string]int, len(items))
+	for _, item := range items {
+		counts[item.OriginalURL]++
+	}
+
+	duplicates := make([]string, 0)
+	for originalURL, count := range counts {
+		if count > 1 {
+			duplicates = append(duplicates, originalURL)
+		}
+	}
+
+	return duplicates
+}
+
 func (s *service) buildBatchRecords(items []BatchItem) ([]urlRepo.BatchRecord, []BatchResult, error) {
 
 	// создаем map для хранения использованных shortUrl

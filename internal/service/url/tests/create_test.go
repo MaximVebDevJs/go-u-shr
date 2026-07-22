@@ -10,6 +10,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+
+	urlRepo "github.com/MaximVebDevJs/go-u-shr/internal/repository/url"
 )
 
 func TestCreateUrlService(t *testing.T) {
@@ -22,10 +24,11 @@ func TestCreateUrlService(t *testing.T) {
 	)
 
 	tests := []struct {
-		name        string
-		inputURL    string
-		setupMock   func(repo *mocks.UrlRepository)
-		expectedErr error
+		name           string
+		inputURL       string
+		setupMock      func(repo *mocks.UrlRepository)
+		expectedErr    error
+		expectedResult string
 	}{
 		{
 			name:     "успешное создание короткой ссылки",
@@ -37,8 +40,23 @@ func TestCreateUrlService(t *testing.T) {
 						originalURL,
 						mock.Anything,
 					).
-					Return(nil)
+					Return("abc12345", nil)
 			},
+		},
+		{
+			name:     "url уже существует",
+			inputURL: originalURL,
+			setupMock: func(repo *mocks.UrlRepository) {
+				repo.EXPECT().
+					Create(
+						ctx,
+						originalURL,
+						mock.Anything,
+					).
+					Return("existing1", urlRepo.ErrOriginalURLExists)
+			},
+			expectedErr:    urlService.ErrURLAlreadyExists,
+			expectedResult: baseURL + "/existing1",
 		},
 		{
 			name:        "невалидный url не доходит до репозитория",
@@ -68,7 +86,8 @@ func TestCreateUrlService(t *testing.T) {
 			if tc.expectedErr != nil {
 				require.Error(t, err)
 				assert.ErrorIs(t, err, tc.expectedErr)
-				assert.Empty(t, result)
+				assert.Equal(t, tc.expectedResult, result)
+
 				return
 			}
 

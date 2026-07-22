@@ -2,6 +2,7 @@ package v1
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -43,6 +44,17 @@ func (h *Handler) CreateUrlJSON(w http.ResponseWriter, r *http.Request) error {
 
 	shortURL, err := h.urlService.Create(r.Context(), req.URL)
 	if err != nil {
+		if errors.Is(err, serviceurl.ErrURLAlreadyExists) {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusConflict)
+
+			if encErr := json.NewEncoder(w).Encode(shortenResponse{Result: shortURL}); encErr != nil {
+				h.logger.Error("не удалось закодировать JSON-ответ", zap.Error(encErr))
+			}
+
+			return nil
+		}
+
 		return fmt.Errorf("ошибка создания короткой ссылки: %w", err)
 	}
 

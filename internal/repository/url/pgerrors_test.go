@@ -30,11 +30,27 @@ func TestMapGetError(t *testing.T) {
 func TestMapCreateError(t *testing.T) {
 	t.Parallel()
 
-	t.Run("unique violation", func(t *testing.T) {
+	t.Run("unique violation on uuid", func(t *testing.T) {
 		t.Parallel()
 
-		pgErr := &pgconn.PgError{Code: pgUniqueViolationCode}
+		pgErr := &pgconn.PgError{
+			Code:           pgUniqueViolationCode,
+			ConstraintName: "urls_uuid_key",
+		}
 		assert.ErrorIs(t, mapCreateError(pgErr), ErrAlreadyExists)
+	})
+
+	t.Run("unique violation on original_url", func(t *testing.T) {
+		t.Parallel()
+
+		pgErr := &pgconn.PgError{
+			Code:           pgUniqueViolationCode,
+			ConstraintName: "urls_original_url_uidx",
+		}
+
+		err := mapCreateError(pgErr)
+		require.Error(t, err)
+		assert.False(t, errors.Is(err, ErrAlreadyExists))
 	})
 
 	t.Run("other error", func(t *testing.T) {

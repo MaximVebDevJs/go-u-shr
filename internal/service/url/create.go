@@ -24,9 +24,13 @@ func (s *service) Create(ctx context.Context, originalURL string) (string, error
 	for range maxIDGenerationAttempts {
 		id := generateShortID()
 
-		err := s.urlRepo.Create(ctx, originalURL, id)
+		returnedID, err := s.urlRepo.Create(ctx, originalURL, id)
+		if errors.Is(err, urlRepo.ErrOriginalURLExists) {
+			return s.baseURL + "/" + returnedID, ErrURLAlreadyExists
+		}
+
 		if err == nil {
-			return s.baseURL + "/" + id, nil
+			return s.baseURL + "/" + returnedID, nil
 		}
 
 		// Коллизия ID — пробуем другой alias.

@@ -10,6 +10,7 @@ import (
 	apiUrlV1 "github.com/MaximVebDevJs/go-u-shr/internal/handler/url/v1"
 	"github.com/MaximVebDevJs/go-u-shr/internal/handler/url/v1/mocks"
 	"github.com/MaximVebDevJs/go-u-shr/internal/logger"
+	serviceurl "github.com/MaximVebDevJs/go-u-shr/internal/service/url"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -43,6 +44,19 @@ func TestCreateUrlHandler(t *testing.T) {
 			},
 			expectedErr:  nil,
 			expectedCode: http.StatusCreated,
+			expectedBody: shortURL,
+			expectedType: "text/plain",
+		},
+		{
+			name: "url уже существует",
+			body: originalURL,
+			setupMock: func(svc *mocks.UrlService) {
+				svc.EXPECT().
+					Create(ctx, originalURL).
+					Return(shortURL, serviceurl.ErrURLAlreadyExists)
+			},
+			expectedErr:  nil,
+			expectedCode: http.StatusConflict,
 			expectedBody: shortURL,
 			expectedType: "text/plain",
 		},
