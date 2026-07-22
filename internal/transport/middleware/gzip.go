@@ -2,10 +2,18 @@ package middleware
 
 import (
 	"compress/gzip"
+	"encoding/json"
 	"io"
 	"net/http"
 	"strings"
+
+	transporthttp "github.com/MaximVebDevJs/go-u-shr/internal/transport/http"
 )
+
+type gzipErrorResponse struct {
+	Message string `json:"message"`
+	Code    int    `json:"code"`
+}
 
 // DecompressMiddleware распаковывает тело запроса,
 // если клиент прислал Content-Encoding: gzip.
@@ -18,15 +26,30 @@ func DecompressMiddleware(next http.Handler) http.Handler {
 
 		reader, err := gzip.NewReader(r.Body)
 		if err != nil {
-			http.Error(w, "передан невалидный gzip", http.StatusBadRequest)
+			// Ответ в JSON, как у остальных API-ошибок, а не plain text.
+			writeGzipError(w, http.StatusBadRequest, "передан невалидный gzip")
+
 			return
 		}
 		defer reader.Close()
 
-		r.Body = io.NopCloser(reader)
+		// LimitReader защищает от gzip bomb: распакованное тело не может превысить лимит.
+		limited := io.LimitReader(reader, transporthttp.MaxGzipDecompressedSize+1)
+		r.Body = io.NopCloser(limited)
 		r.Header.Del("Content-Encoding")
 
 		next.ServeHTTP(w, r)
+	})
+}
+
+// writeGzipError пишет JSON-ошибку в том же формате, что и transport/http.ErrorHandler.
+func writeGzipError(w http.ResponseWriter, code int, message string) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(code)
+
+	_ = json.NewEncoder(w).Encode(gzipErrorResponse{
+		Message: message,
+		Code:    code,
 	})
 }
 

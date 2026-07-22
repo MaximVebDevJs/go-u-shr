@@ -10,6 +10,22 @@ jobs:
   statictest:
     runs-on: ubuntu-latest
     container: golang:1.26
+
+    services:
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: praktikum
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      TEST_DATABASE_DSN: postgres://postgres:postgres@postgres:5432/praktikum?sslmode=disable
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -31,3 +47,11 @@ jobs:
       - name: Run statictest
         run: |
           go vet -vettool=$(which statictest) ./...
+
+      - name: Run unit tests with race detector
+        run: |
+          go test -race ./...
+
+      - name: Run integration tests with race detector
+        run: |
+          go test -race -tags=integration ./...

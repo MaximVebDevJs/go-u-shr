@@ -18,8 +18,7 @@ func (h *Handler) GetUrl(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	h.logger.Info("короткая ссылка успешно получена",
-		zap.String("id", id),
-		zap.String("original", originalURL),
+		append([]zap.Field{zap.String("id", id)}, urlLogFields(originalURL)...)...,
 	)
 
 	w.Header().Set("Location", originalURL)

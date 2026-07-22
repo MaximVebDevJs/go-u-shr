@@ -23,11 +23,13 @@ func TestCreateUrlService(t *testing.T) {
 
 	tests := []struct {
 		name        string
+		inputURL    string
 		setupMock   func(repo *mocks.UrlRepository)
 		expectedErr error
 	}{
 		{
-			name: "успешное создание короткой ссылки",
+			name:     "успешное создание короткой ссылки",
+			inputURL: originalURL,
 			setupMock: func(repo *mocks.UrlRepository) {
 				repo.EXPECT().
 					Create(
@@ -37,6 +39,12 @@ func TestCreateUrlService(t *testing.T) {
 					).
 					Return(nil)
 			},
+		},
+		{
+			name:        "невалидный url не доходит до репозитория",
+			inputURL:    "javascript:alert(1)",
+			setupMock:   func(repo *mocks.UrlRepository) {},
+			expectedErr: urlService.ErrInvalidUrl,
 		},
 	}
 
@@ -54,7 +62,7 @@ func TestCreateUrlService(t *testing.T) {
 
 			result, err := svc.Create(
 				ctx,
-				originalURL,
+				tc.inputURL,
 			)
 
 			if tc.expectedErr != nil {

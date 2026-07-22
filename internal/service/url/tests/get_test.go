@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	urlRepo "github.com/MaximVebDevJs/go-u-shr/internal/repository/url"
 	errs "github.com/MaximVebDevJs/go-u-shr/internal/service/url"
 	urlService "github.com/MaximVebDevJs/go-u-shr/internal/service/url"
 	"github.com/MaximVebDevJs/go-u-shr/internal/service/url/mocks"
@@ -41,7 +42,18 @@ func TestGetUrlService(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
-			name: "ошибка получения URL из репозитория",
+			name: "url не найден в репозитории",
+			id:   id,
+			setupMock: func(repo *mocks.UrlRepository) {
+				repo.EXPECT().
+					Get(ctx, id).
+					Return("", urlRepo.ErrNotFound)
+			},
+			expectedURL: "",
+			expectedErr: errs.ErrUrlNotFound,
+		},
+		{
+			name: "ошибка получения URL из репозитория (legacy mock)",
 			id:   id,
 			setupMock: func(repo *mocks.UrlRepository) {
 				repo.EXPECT().

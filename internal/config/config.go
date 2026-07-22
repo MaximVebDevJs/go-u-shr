@@ -6,18 +6,18 @@ import (
 )
 
 type Config struct {
-	ServerAddr      string
-	BaseURL         string
-	LogLevel        string
-	FileStoragePath string
+	ServerAddr  string
+	BaseURL     string
+	LogLevel    string
+	DatabaseDSN string
 }
 
 func Load() *Config {
-	var serverAddr, baseURL, logLevel, fileStoragePath string
+	var serverAddr, baseURL, logLevel, databaseDSN string
 	flag.StringVar(&serverAddr, "a", "0.0.0.0:8080", "address and port to run server")
 	flag.StringVar(&baseURL, "b", "http://0.0.0.0:8080", "address server")
 	flag.StringVar(&logLevel, "l", "info", "log level")
-	flag.StringVar(&fileStoragePath, "f", "storage.json", "file storage path")
+	flag.StringVar(&databaseDSN, "d", "postgres://user:password@localhost:5432/database", "database DSN")
 	flag.Parse()
 
 	if envAddr, ok := os.LookupEnv("SERVER_ADDRESS"); ok {
@@ -29,14 +29,14 @@ func Load() *Config {
 	if envLog, ok := os.LookupEnv("LOG_LEVEL"); ok {
 		logLevel = envLog
 	}
-	if envPath, ok := os.LookupEnv("FILE_STORAGE_PATH"); ok {
-		fileStoragePath = envPath
+	if envDSN, ok := os.LookupEnv("DATABASE_DSN"); ok {
+		databaseDSN = envDSN
 	}
 
 	return &Config{
-		ServerAddr:      serverAddr,
-		BaseURL:         baseURL,
-		LogLevel:        logLevel,
-		FileStoragePath: fileStoragePath,
+		ServerAddr:  serverAddr,
+		BaseURL:     baseURL,
+		LogLevel:    logLevel,
+		DatabaseDSN: databaseDSN,
 	}
 }
