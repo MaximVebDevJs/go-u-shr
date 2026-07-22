@@ -15,6 +15,21 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+var (
+	schemaOnce sync.Once
+	schemaErr  error
+)
+
+// ensureSchema выполняет Migrate один раз на процесс: параллельный CREATE TABLE
+// гоняется на системном каталоге PostgreSQL (pg_class_relname_nsp_index).
+func ensureSchema(ctx context.Context, pool *pgxpool.Pool) error {
+	schemaOnce.Do(func() {
+		schemaErr = urlRepo.Migrate(ctx, pool)
+	})
+
+	return schemaErr
+}
+
 func setupTestRepository(t *testing.T) (*urlRepo.Repository, *pgxpool.Pool) {
 	t.Helper()
 
@@ -31,7 +46,7 @@ func setupTestRepository(t *testing.T) (*urlRepo.Repository, *pgxpool.Pool) {
 	t.Cleanup(pool.Close)
 
 	require.NoError(t, pool.Ping(ctx))
-	require.NoError(t, urlRepo.Migrate(ctx, pool))
+	require.NoError(t, ensureSchema(ctx, pool))
 
 	_, err = pool.Exec(ctx, "TRUNCATE TABLE urls RESTART IDENTITY")
 	require.NoError(t, err)
@@ -40,16 +55,12 @@ func setupTestRepository(t *testing.T) (*urlRepo.Repository, *pgxpool.Pool) {
 }
 
 func TestRepositoryPing(t *testing.T) {
-	t.Parallel()
-
 	repo, _ := setupTestRepository(t)
 
 	require.NoError(t, repo.Ping(context.Background()))
 }
 
 func TestRepositoryCreateAndGet(t *testing.T) {
-	t.Parallel()
-
 	ctx := context.Background()
 	repo, _ := setupTestRepository(t)
 
@@ -66,8 +77,6 @@ func TestRepositoryCreateAndGet(t *testing.T) {
 }
 
 func TestRepositoryGetNotFound(t *testing.T) {
-	t.Parallel()
-
 	ctx := context.Background()
 	repo, _ := setupTestRepository(t)
 
@@ -77,8 +86,6 @@ func TestRepositoryGetNotFound(t *testing.T) {
 }
 
 func TestRepositoryCreateDuplicateReturnsError(t *testing.T) {
-	t.Parallel()
-
 	ctx := context.Background()
 	repo, _ := setupTestRepository(t)
 
@@ -96,8 +103,6 @@ func TestRepositoryCreateDuplicateReturnsError(t *testing.T) {
 }
 
 func TestRepositoryCreateConcurrent(t *testing.T) {
-	t.Parallel()
-
 	ctx := context.Background()
 	repo, _ := setupTestRepository(t)
 
@@ -128,8 +133,6 @@ func TestRepositoryCreateConcurrent(t *testing.T) {
 }
 
 func TestMigrateCreatesTable(t *testing.T) {
-	t.Parallel()
-
 	dsn := os.Getenv("TEST_DATABASE_DSN")
 	if dsn == "" {
 		dsn = os.Getenv("DATABASE_DSN")
@@ -143,7 +146,7 @@ func TestMigrateCreatesTable(t *testing.T) {
 	t.Cleanup(pool.Close)
 
 	require.NoError(t, pool.Ping(ctx))
-	require.NoError(t, urlRepo.Migrate(ctx, pool))
+	require.NoError(t, ensureSchema(ctx, pool))
 
 	var exists bool
 	err = pool.QueryRow(ctx, `
