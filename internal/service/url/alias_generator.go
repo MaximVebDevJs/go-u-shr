@@ -1,16 +1,24 @@
 package url
 
-import "math/rand"
+import (
+	"crypto/rand"
+	"fmt"
+	"math/big"
+)
 
-// с помощью ИИ, так как в тз требований к функции нет
-func generateShortID() string {
+func generateShortID() (string, error) {
 	const letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
 	result := make([]byte, 8)
 
 	for i := range result {
-		result[i] = letters[rand.Intn(len(letters))]
+		n, err := rand.Int(rand.Reader, big.NewInt(int64(len(letters))))
+		if err != nil {
+			return "", fmt.Errorf("сгенерировать alias: %w", err)
+		}
+
+		result[i] = letters[n.Int64()]
 	}
 
-	return string(result)
+	return string(result), nil
 }

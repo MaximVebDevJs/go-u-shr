@@ -22,10 +22,11 @@ func TestBatchCreateUrlService(t *testing.T) {
 	)
 
 	tests := []struct {
-		name        string
-		items       []urlService.BatchItem
-		setupMock   func(repo *mocks.UrlRepository)
-		expectedErr error
+		name               string
+		items              []urlService.BatchItem
+		setupMock          func(repo *mocks.UrlRepository)
+		expectedErr        error
+		checkDuplicateURLs []string
 	}{
 		{
 			name: "успешное пакетное создание коротких ссылок",
@@ -63,6 +64,17 @@ func TestBatchCreateUrlService(t *testing.T) {
 			expectedErr: urlService.ErrInvalidUrl,
 		},
 		{
+			name: "дубликат original_url внутри batch",
+			items: []urlService.BatchItem{
+				{CorrelationID: "1", OriginalURL: "https://example.com/a"},
+				{CorrelationID: "2", OriginalURL: "https://example.com/a"},
+			},
+			setupMock: func(repo *mocks.UrlRepository) {},
+			checkDuplicateURLs: []string{
+				"https://example.com/a",
+			},
+		},
+		{
 			name: "превышен лимит batch",
 			items: func() []urlService.BatchItem {
 				items := make([]urlService.BatchItem, 101)
@@ -96,6 +108,17 @@ func TestBatchCreateUrlService(t *testing.T) {
 			if tc.expectedErr != nil {
 				require.Error(t, err)
 				assert.ErrorIs(t, err, tc.expectedErr)
+				assert.Nil(t, results)
+
+				return
+			}
+
+			if tc.checkDuplicateURLs != nil {
+				require.Error(t, err)
+
+				var duplicateErr *urlService.DuplicateURLsError
+				require.ErrorAs(t, err, &duplicateErr)
+				assert.ElementsMatch(t, tc.checkDuplicateURLs, duplicateErr.URLs)
 				assert.Nil(t, results)
 
 				return

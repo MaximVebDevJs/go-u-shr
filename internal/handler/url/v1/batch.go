@@ -2,6 +2,7 @@ package v1
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -55,6 +56,18 @@ func (h *Handler) BatchUrls(w http.ResponseWriter, r *http.Request) error {
 
 	results, err := h.urlService.BatchCreate(r.Context(), items)
 	if err != nil {
+		var duplicateErr *serviceurl.DuplicateURLsError
+		if errors.As(err, &duplicateErr) {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusConflict)
+
+			if encErr := json.NewEncoder(w).Encode(duplicateErr.URLs); encErr != nil {
+				h.logger.Error("не удалось закодировать JSON-ответ", zap.Error(encErr))
+			}
+
+			return nil
+		}
+
 		return fmt.Errorf("ошибка пакетного создания коротких ссылок: %w", err)
 	}
 

@@ -117,6 +117,25 @@ func TestBatchUrlsHandler(t *testing.T) {
 				"code":    float64(http.StatusInternalServerError),
 			},
 		},
+		{
+			name: "дубликаты original_url",
+			body: []map[string]string{
+				{"correlation_id": "1", "original_url": "https://example.com/a"},
+				{"correlation_id": "2", "original_url": "https://example.com/a"},
+			},
+			setupMock: func(svc *mocks.UrlService) {
+				svc.EXPECT().
+					BatchCreate(ctx, []serviceurl.BatchItem{
+						{CorrelationID: "1", OriginalURL: "https://example.com/a"},
+						{CorrelationID: "2", OriginalURL: "https://example.com/a"},
+					}).
+					Return(nil, &serviceurl.DuplicateURLsError{
+						URLs: []string{"https://example.com/a"},
+					})
+			},
+			expectedCode: http.StatusConflict,
+			expectedBody: []string{"https://example.com/a"},
+		},
 	}
 
 	for _, tc := range tests {
@@ -163,6 +182,11 @@ func TestBatchUrlsHandler(t *testing.T) {
 				}
 			case []map[string]string:
 				var resp []map[string]string
+				errDecode := json.NewDecoder(rec.Body).Decode(&resp)
+				require.NoError(t, errDecode)
+				assert.Equal(t, expected, resp)
+			case []string:
+				var resp []string
 				errDecode := json.NewDecoder(rec.Body).Decode(&resp)
 				require.NoError(t, errDecode)
 				assert.Equal(t, expected, resp)

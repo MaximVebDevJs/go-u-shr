@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	urlRepo "github.com/MaximVebDevJs/go-u-shr/internal/repository/url"
+	"github.com/MaximVebDevJs/go-u-shr/internal/model"
 )
 
 func (s *service) Get(ctx context.Context, id string) (string, error) {
@@ -16,7 +16,7 @@ func (s *service) Get(ctx context.Context, id string) (string, error) {
 	url, err := s.urlRepo.Get(ctx, id)
 	if err != nil {
 		// Маппим инфраструктурную ошибку в доменную, чтобы HTTP-слой отдал 404, а не 500.
-		if errors.Is(err, urlRepo.ErrNotFound) {
+		if errors.Is(err, model.ErrURLNotFound) {
 			return "", ErrUrlNotFound
 		}
 

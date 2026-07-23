@@ -67,6 +67,17 @@ func TestCreateUrlJSONHandler(t *testing.T) {
 			},
 		},
 		{
+			name: "url уже существует",
+			body: map[string]string{"url": originalURL},
+			setupMock: func(svc *mocks.UrlService) {
+				svc.EXPECT().
+					Create(ctx, originalURL).
+					Return(shortURL, serviceurl.ErrURLAlreadyExists)
+			},
+			expectedCode: http.StatusConflict,
+			expectedBody: map[string]interface{}{"result": shortURL},
+		},
+		{
 			name: "ошибка сервиса",
 			body: map[string]string{"url": originalURL},
 			setupMock: func(svc *mocks.UrlService) {

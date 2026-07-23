@@ -3,12 +3,12 @@ package url
 import (
 	"context"
 
-	urlRepo "github.com/MaximVebDevJs/go-u-shr/internal/repository/url"
+	"github.com/MaximVebDevJs/go-u-shr/internal/model"
 )
 
 type UrlRepository interface {
 	Get(ctx context.Context, id string) (string, error)
-	Create(ctx context.Context, originalURL string, id string) error
-	CreateBatch(ctx context.Context, records []urlRepo.BatchRecord) error
+	Create(ctx context.Context, originalURL string, id string) (string, error)
+	CreateBatch(ctx context.Context, records []model.BatchRecord) error
 	Ping(ctx context.Context) error
 }

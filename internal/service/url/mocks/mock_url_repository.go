@@ -39,20 +39,29 @@ func (_m *UrlRepository) EXPECT() *UrlRepository_Expecter {
 }
 
 // Create provides a mock function for the type UrlRepository
-func (_mock *UrlRepository) Create(ctx context.Context, originalURL string, id string) error {
+func (_mock *UrlRepository) Create(ctx context.Context, originalURL string, id string) (string, error) {
 	ret := _mock.Called(ctx, originalURL, id)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Create")
 	}
 
-	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) error); ok {
+	var r0 string
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) (string, error)); ok {
+		return returnFunc(ctx, originalURL, id)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) string); ok {
 		r0 = returnFunc(ctx, originalURL, id)
 	} else {
-		r0 = ret.Error(0)
+		r0 = ret.Get(0).(string)
 	}
-	return r0
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = returnFunc(ctx, originalURL, id)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
 }
 
 // UrlRepository_Create_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Create'
@@ -75,12 +84,12 @@ func (_c *UrlRepository_Create_Call) Run(run func(ctx context.Context, originalU
 	return _c
 }
 
-func (_c *UrlRepository_Create_Call) Return(err error) *UrlRepository_Create_Call {
-	_c.Call.Return(err)
+func (_c *UrlRepository_Create_Call) Return(s string, err error) *UrlRepository_Create_Call {
+	_c.Call.Return(s, err)
 	return _c
 }
 
-func (_c *UrlRepository_Create_Call) RunAndReturn(run func(ctx context.Context, originalURL string, id string) error) *UrlRepository_Create_Call {
+func (_c *UrlRepository_Create_Call) RunAndReturn(run func(ctx context.Context, originalURL string, id string) (string, error)) *UrlRepository_Create_Call {
 	_c.Call.Return(run)
 	return _c
 }

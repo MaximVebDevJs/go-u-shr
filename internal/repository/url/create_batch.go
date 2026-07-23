@@ -2,15 +2,14 @@ package url
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"strings"
+
+	"github.com/MaximVebDevJs/go-u-shr/internal/model"
 )
 
 // BatchRecord описывает одну запись для пакетной вставки.
-type BatchRecord struct {
-	OriginalURL string
-	ID          string
-}
+type BatchRecord = model.BatchRecord
 
 // CreateBatch сохраняет несколько URL в одной транзакции.
 // Либо все строки записываются, либо ни одна (rollback при ошибке).
@@ -28,21 +27,37 @@ func (r *Repository) CreateBatch(ctx context.Context, records []BatchRecord) err
 		return fmt.Errorf("начать транзакцию: %w", err)
 	}
 
-	// Rollback после успешного Commit — no-op; нужен для отката при ошибке Exec/Commit.
+	// Rollback нужен для отката при ошибке Exec/Commit.
 	defer func() {
-		_ = tx.Rollback(ctx)
+		_ = tx.Rollback(context.Background())
 	}()
 
-	// собираем sql запрос
-	query, args := buildBatchInsertQuery(records)
+	// создаем слайс для хранения дублирующихся original_url
+	conflicts := make([]string, 0)
 
-	// выполняем sql запрос
-	if _, err = tx.Exec(ctx, query, args...); err != nil {
-		// маппим ошибку
-		return mapCreateError(err)
+	for _, rec := range records {
+		// вставляем запись в БД
+		returnedID, insertErr := r.insertURL(ctx, tx, rec.OriginalURL, rec.ID)
+		if errors.Is(insertErr, ErrOriginalURLExists) {
+			conflicts = appendUniqueURL(conflicts, rec.OriginalURL)
+			continue
+		}
+
+		if insertErr != nil {
+			return insertErr
+		}
+
+		// если returnedID не равен rec.ID, то запись уже существует
+		if returnedID != rec.ID {
+			// добавляем original_url в слайс conflicts
+			conflicts = appendUniqueURL(conflicts, rec.OriginalURL)
+		}
 	}
 
-	// коммитим транзакцию
+	if len(conflicts) > 0 {
+		return &model.DuplicateOriginalURLsError{URLs: conflicts}
+	}
+
 	if err = tx.Commit(ctx); err != nil {
 		return fmt.Errorf("зафиксировать транзакцию: %w", err)
 	}
@@ -50,23 +65,12 @@ func (r *Repository) CreateBatch(ctx context.Context, records []BatchRecord) err
 	return nil
 }
 
-func buildBatchInsertQuery(records []BatchRecord) (string, []any) {
-	// для конкатенации без цикла
-	var sb strings.Builder
-	// Да, по смыслу — это «допиши эту строку в конец», но не буквально sb +=
-	sb.WriteString("INSERT INTO urls (original_url, uuid) VALUES ")
-
-	args := make([]any, 0, len(records)*2)
-
-	for i, rec := range records {
-		if i > 0 {
-			sb.WriteString(", ")
+func appendUniqueURL(urls []string, url string) []string {
+	for _, existing := range urls {
+		if existing == url {
+			return urls
 		}
-
-		// дописываем аргументы для запроса
-		sb.WriteString(fmt.Sprintf("($%d, $%d)", i*2+1, i*2+2))
-		args = append(args, rec.OriginalURL, rec.ID)
 	}
 
-	return sb.String(), args
+	return append(urls, url)
 }

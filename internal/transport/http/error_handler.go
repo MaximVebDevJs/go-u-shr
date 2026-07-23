@@ -34,7 +34,7 @@ func ErrorHandler(ctx context.Context, logger *zap.Logger, w http.ResponseWriter
 	}); encErr != nil {
 		logger.Error(
 			"ошибка кодирования ответа",
-			zap.Error(err),
+			zap.Error(encErr),
 		)
 	}
 }
