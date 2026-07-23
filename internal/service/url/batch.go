@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	urlRepo "github.com/MaximVebDevJs/go-u-shr/internal/repository/url"
+	"github.com/MaximVebDevJs/go-u-shr/internal/model"
 )
 
 const maxBatchSize = 100
@@ -61,12 +61,12 @@ func (s *service) BatchCreate(ctx context.Context, items []BatchItem) ([]BatchRe
 			return results, nil
 		}
 
-		var duplicateRepo *urlRepo.DuplicateOriginalURLsError
+		var duplicateRepo *model.DuplicateOriginalURLsError
 		if errors.As(err, &duplicateRepo) {
 			return nil, &DuplicateURLsError{URLs: duplicateRepo.URLs}
 		}
 
-		if errors.Is(err, urlRepo.ErrAlreadyExists) {
+		if errors.Is(err, model.ErrAliasAlreadyExists) {
 			continue
 		}
 
@@ -95,12 +95,12 @@ func findInBatchDuplicateURLs(items []BatchItem) []string {
 	return duplicates
 }
 
-func (s *service) buildBatchRecords(items []BatchItem) ([]urlRepo.BatchRecord, []BatchResult, error) {
+func (s *service) buildBatchRecords(items []BatchItem) ([]model.BatchRecord, []BatchResult, error) {
 
 	// создаем map для хранения использованных shortUrl
 	usedIDs := make(map[string]struct{}, len(items))
 	// создаем слайс для записей
-	records := make([]urlRepo.BatchRecord, 0, len(items))
+	records := make([]model.BatchRecord, 0, len(items))
 	// создаем слайс для результатов
 	results := make([]BatchResult, 0, len(items))
 
@@ -111,7 +111,7 @@ func (s *service) buildBatchRecords(items []BatchItem) ([]urlRepo.BatchRecord, [
 			return nil, nil, err
 		}
 
-		records = append(records, urlRepo.BatchRecord{
+		records = append(records, model.BatchRecord{
 			OriginalURL: item.OriginalURL,
 			ID:          id,
 		})
@@ -127,7 +127,11 @@ func (s *service) buildBatchRecords(items []BatchItem) ([]urlRepo.BatchRecord, [
 // generateUniqueBatchID возвращает alias, уникальный внутри текущего батча.
 func generateUniqueBatchID(usedIDs map[string]struct{}) (string, error) {
 	for range maxIDGenerationAttempts {
-		id := generateShortID()
+		id, err := generateShortID()
+		if err != nil {
+			return "", err
+		}
+
 		if _, exists := usedIDs[id]; exists {
 			continue
 		}

@@ -4,13 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+
+	"github.com/MaximVebDevJs/go-u-shr/internal/model"
 )
 
 // BatchRecord описывает одну запись для пакетной вставки.
-type BatchRecord struct {
-	OriginalURL string
-	ID          string
-}
+type BatchRecord = model.BatchRecord
 
 // CreateBatch сохраняет несколько URL в одной транзакции.
 // Либо все строки записываются, либо ни одна (rollback при ошибке).
@@ -30,7 +29,7 @@ func (r *Repository) CreateBatch(ctx context.Context, records []BatchRecord) err
 
 	// Rollback нужен для отката при ошибке Exec/Commit.
 	defer func() {
-		_ = tx.Rollback(ctx)
+		_ = tx.Rollback(context.Background())
 	}()
 
 	// создаем слайс для хранения дублирующихся original_url
@@ -56,7 +55,7 @@ func (r *Repository) CreateBatch(ctx context.Context, records []BatchRecord) err
 	}
 
 	if len(conflicts) > 0 {
-		return &DuplicateOriginalURLsError{URLs: conflicts}
+		return &model.DuplicateOriginalURLsError{URLs: conflicts}
 	}
 
 	if err = tx.Commit(ctx); err != nil {

@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"encoding/json"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -21,7 +22,7 @@ func TestPingHandler(t *testing.T) {
 		name         string
 		setupMock    func(svc *mocks.UrlService)
 		expectedCode int
-		expectPlain  bool
+		expectJSON   bool
 	}{
 		{
 			name: "база данных доступна",
@@ -36,7 +37,7 @@ func TestPingHandler(t *testing.T) {
 				svc.EXPECT().Ping(mock.Anything).Return(errors.New("connection refused"))
 			},
 			expectedCode: http.StatusInternalServerError,
-			expectPlain:  true,
+			expectJSON:   true,
 		},
 	}
 
@@ -62,9 +63,14 @@ func TestPingHandler(t *testing.T) {
 
 			assert.Equal(t, tc.expectedCode, rec.Code)
 
-			if tc.expectPlain {
-				assert.Contains(t, rec.Header().Get("Content-Type"), "text/plain")
-				assert.Contains(t, rec.Body.String(), http.StatusText(http.StatusInternalServerError))
+			if tc.expectJSON {
+				var resp map[string]interface{}
+				err := json.NewDecoder(rec.Body).Decode(&resp)
+
+				assert.NoError(t, err)
+				assert.Equal(t, "application/json", rec.Header().Get("Content-Type"))
+				assert.Equal(t, "внутренняя ошибка", resp["message"])
+				assert.Equal(t, float64(http.StatusInternalServerError), resp["code"])
 			}
 		})
 	}

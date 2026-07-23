@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	urlRepo "github.com/MaximVebDevJs/go-u-shr/internal/repository/url"
+	"github.com/MaximVebDevJs/go-u-shr/internal/model"
 )
 
 // maxIDGenerationAttempts — сколько раз пробуем сгенерировать ID при коллизии.
@@ -22,10 +22,13 @@ func (s *service) Create(ctx context.Context, originalURL string) (string, error
 	}
 
 	for range maxIDGenerationAttempts {
-		id := generateShortID()
+		id, err := generateShortID()
+		if err != nil {
+			return "", fmt.Errorf("создать url: %w", err)
+		}
 
 		returnedID, err := s.urlRepo.Create(ctx, originalURL, id)
-		if errors.Is(err, urlRepo.ErrOriginalURLExists) {
+		if errors.Is(err, model.ErrOriginalURLExists) {
 			return s.baseURL + "/" + returnedID, ErrURLAlreadyExists
 		}
 
@@ -34,7 +37,7 @@ func (s *service) Create(ctx context.Context, originalURL string) (string, error
 		}
 
 		// Коллизия ID — пробуем другой alias.
-		if errors.Is(err, urlRepo.ErrAlreadyExists) {
+		if errors.Is(err, model.ErrAliasAlreadyExists) {
 			continue
 		}
 

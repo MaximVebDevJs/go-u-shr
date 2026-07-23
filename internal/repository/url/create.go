@@ -26,10 +26,16 @@ func (r *Repository) insertURL(
 	}
 
 	const query = `
-		INSERT INTO urls (original_url, uuid)
-		VALUES ($1, $2)
-		ON CONFLICT (original_url) DO UPDATE SET original_url = urls.original_url
-		RETURNING uuid`
+		WITH inserted AS (
+			INSERT INTO urls (original_url, uuid)
+			VALUES ($1, $2)
+			ON CONFLICT (original_url) DO NOTHING
+			RETURNING uuid
+		)
+		SELECT uuid FROM inserted
+		UNION ALL
+		SELECT uuid FROM urls WHERE original_url = $1
+		LIMIT 1`
 
 	var returnedID string
 

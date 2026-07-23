@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"fmt"
 	"net/http"
 
 	"go.uber.org/zap"
@@ -9,14 +10,7 @@ import (
 // Ping GET /ping.
 func (h *Handler) Ping(w http.ResponseWriter, r *http.Request) error {
 	if err := h.urlService.Ping(r.Context()); err != nil {
-		h.logger.Error("проверка базы данных не удалась",
-			zap.String("method", r.Method),
-			zap.String("path", r.URL.Path),
-			zap.Error(err),
-		)
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-
-		return nil
+		return fmt.Errorf("проверка базы данных: %w", err)
 	}
 
 	h.logger.Info("проверка базы данных успешна",

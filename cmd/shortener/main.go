@@ -20,6 +20,7 @@ import (
 )
 
 const (
+	startupTimeout  = 10 * time.Second
 	shutdownTimeout = 10 * time.Second
 	readTimeout     = 15 * time.Second
 	writeTimeout    = 15 * time.Second
@@ -36,32 +37,37 @@ func main() {
 	}
 	defer log.Sync()
 
-	ctx := context.Background()
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
 
-	pool, err := pgxpool.New(ctx, cfg.DatabaseDSN)
+	startupCtx, cancelStartup := context.WithTimeout(ctx, startupTimeout)
+	defer cancelStartup()
+
+	pool, err := pgxpool.New(startupCtx, cfg.DatabaseDSN)
 	if err != nil {
 		slog.Error("создание пула соединений", "error", err)
 		os.Exit(1)
 	}
 	defer pool.Close()
 
-	if err = pool.Ping(ctx); err != nil {
+	if err = pool.Ping(startupCtx); err != nil {
 		slog.Error("проверка удалось ли подключиться к базе данных", "error", err)
 		os.Exit(1)
 	}
 
-	if err = urlRepo.Migrate(ctx, pool); err != nil {
+	if err = urlRepo.Migrate(startupCtx, pool); err != nil {
 		slog.Error("миграция базы данных", "error", err)
 		os.Exit(1)
 	}
+	cancelStartup()
 
-	if err = run(cfg, log, pool); err != nil {
+	if err = run(ctx, cfg, log, pool); err != nil {
 		slog.Error("ошибка запуска urlShortener сервиса", "error", err)
 		os.Exit(1)
 	}
 }
 
-func run(cfg *config.Config, log *zap.Logger, pool *pgxpool.Pool) error {
+func run(ctx context.Context, cfg *config.Config, log *zap.Logger, pool *pgxpool.Pool) error {
 	// Создать HTTP-обработчик через фабрику приложения.
 	handler, err := app.NewHTTPHandler(cfg, log, pool)
 	if err != nil {
@@ -76,19 +82,22 @@ func run(cfg *config.Config, log *zap.Logger, pool *pgxpool.Pool) error {
 		IdleTimeout:  idleTimeout,
 	}
 
+	serverErr := make(chan error, 1)
+
 	// Запускаем HTTP-сервер в отдельной горутине.
 	go func() {
 		log.Info("HTTP сервер запущен", zap.String("address", cfg.ServerAddr))
 
 		if listenErr := httpServer.ListenAndServe(); listenErr != nil && !errors.Is(listenErr, http.ErrServerClosed) {
-			log.Error("ошибка HTTP сервера", zap.Error(listenErr))
+			serverErr <- fmt.Errorf("HTTP сервер: %w", listenErr)
 		}
 	}()
 
-	// Ожидаем сигнал завершения.
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	<-quit
+	select {
+	case err := <-serverErr:
+		return err
+	case <-ctx.Done():
+	}
 
 	log.Info("остановка urlShortener")
 
@@ -96,7 +105,7 @@ func run(cfg *config.Config, log *zap.Logger, pool *pgxpool.Pool) error {
 	defer cancel()
 
 	if shutdownErr := httpServer.Shutdown(shutdownCtx); shutdownErr != nil {
-		log.Error("ошибка остановки HTTP сервера", zap.Error(shutdownErr))
+		return fmt.Errorf("остановка HTTP сервера: %w", shutdownErr)
 	}
 
 	log.Info("urlShortener остановлен")
