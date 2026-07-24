@@ -19,6 +19,12 @@ type BatchRecord struct {
 	ID          string
 }
 
+// UserURL описывает URL, созданный конкретным пользователем.
+type UserURL struct {
+	ShortID     string
+	OriginalURL string
+}
+
 // DuplicateOriginalURLsError содержит список original_url, вызвавших конфликт.
 type DuplicateOriginalURLsError struct {
 	URLs []string

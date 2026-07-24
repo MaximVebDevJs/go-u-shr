@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/MaximVebDevJs/go-u-shr/internal/auth"
 	apiUrlV1 "github.com/MaximVebDevJs/go-u-shr/internal/handler/url/v1"
 	"github.com/MaximVebDevJs/go-u-shr/internal/handler/url/v1/mocks"
 	"github.com/MaximVebDevJs/go-u-shr/internal/logger"
@@ -19,7 +20,8 @@ func TestCreateUrlHandler(t *testing.T) {
 	t.Parallel()
 
 	var (
-		ctx = context.Background()
+		userID = "user-1"
+		ctx    = auth.WithUserID(context.Background(), userID)
 
 		originalURL = "https://practicum.yandex.ru/"
 		shortURL    = "http://localhost:8080/EwHXdJfB"
@@ -39,7 +41,7 @@ func TestCreateUrlHandler(t *testing.T) {
 			body: originalURL,
 			setupMock: func(svc *mocks.UrlService) {
 				svc.EXPECT().
-					Create(ctx, originalURL).
+					Create(ctx, userID, originalURL).
 					Return(shortURL, nil)
 			},
 			expectedErr:  nil,
@@ -52,7 +54,7 @@ func TestCreateUrlHandler(t *testing.T) {
 			body: originalURL,
 			setupMock: func(svc *mocks.UrlService) {
 				svc.EXPECT().
-					Create(ctx, originalURL).
+					Create(ctx, userID, originalURL).
 					Return(shortURL, serviceurl.ErrURLAlreadyExists)
 			},
 			expectedErr:  nil,

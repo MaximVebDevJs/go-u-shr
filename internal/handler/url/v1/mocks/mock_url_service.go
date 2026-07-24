@@ -39,8 +39,8 @@ func (_m *UrlService) EXPECT() *UrlService_Expecter {
 }
 
 // BatchCreate provides a mock function for the type UrlService
-func (_mock *UrlService) BatchCreate(ctx context.Context, items []url.BatchItem) ([]url.BatchResult, error) {
-	ret := _mock.Called(ctx, items)
+func (_mock *UrlService) BatchCreate(ctx context.Context, userID string, items []url.BatchItem) ([]url.BatchResult, error) {
+	ret := _mock.Called(ctx, userID, items)
 
 	if len(ret) == 0 {
 		panic("no return value specified for BatchCreate")
@@ -48,18 +48,18 @@ func (_mock *UrlService) BatchCreate(ctx context.Context, items []url.BatchItem)
 
 	var r0 []url.BatchResult
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, []url.BatchItem) ([]url.BatchResult, error)); ok {
-		return returnFunc(ctx, items)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, []url.BatchItem) ([]url.BatchResult, error)); ok {
+		return returnFunc(ctx, userID, items)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, []url.BatchItem) []url.BatchResult); ok {
-		r0 = returnFunc(ctx, items)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, []url.BatchItem) []url.BatchResult); ok {
+		r0 = returnFunc(ctx, userID, items)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]url.BatchResult)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, []url.BatchItem) error); ok {
-		r1 = returnFunc(ctx, items)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, []url.BatchItem) error); ok {
+		r1 = returnFunc(ctx, userID, items)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -73,14 +73,15 @@ type UrlService_BatchCreate_Call struct {
 
 // BatchCreate is a helper method to define mock.On call
 //   - ctx
+//   - userID
 //   - items
-func (_e *UrlService_Expecter) BatchCreate(ctx interface{}, items interface{}) *UrlService_BatchCreate_Call {
-	return &UrlService_BatchCreate_Call{Call: _e.mock.On("BatchCreate", ctx, items)}
+func (_e *UrlService_Expecter) BatchCreate(ctx interface{}, userID interface{}, items interface{}) *UrlService_BatchCreate_Call {
+	return &UrlService_BatchCreate_Call{Call: _e.mock.On("BatchCreate", ctx, userID, items)}
 }
 
-func (_c *UrlService_BatchCreate_Call) Run(run func(ctx context.Context, items []url.BatchItem)) *UrlService_BatchCreate_Call {
+func (_c *UrlService_BatchCreate_Call) Run(run func(ctx context.Context, userID string, items []url.BatchItem)) *UrlService_BatchCreate_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].([]url.BatchItem))
+		run(args[0].(context.Context), args[1].(string), args[2].([]url.BatchItem))
 	})
 	return _c
 }
@@ -90,14 +91,14 @@ func (_c *UrlService_BatchCreate_Call) Return(batchResults []url.BatchResult, er
 	return _c
 }
 
-func (_c *UrlService_BatchCreate_Call) RunAndReturn(run func(ctx context.Context, items []url.BatchItem) ([]url.BatchResult, error)) *UrlService_BatchCreate_Call {
+func (_c *UrlService_BatchCreate_Call) RunAndReturn(run func(ctx context.Context, userID string, items []url.BatchItem) ([]url.BatchResult, error)) *UrlService_BatchCreate_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // Create provides a mock function for the type UrlService
-func (_mock *UrlService) Create(ctx context.Context, originalURL string) (string, error) {
-	ret := _mock.Called(ctx, originalURL)
+func (_mock *UrlService) Create(ctx context.Context, userID string, originalURL string) (string, error) {
+	ret := _mock.Called(ctx, userID, originalURL)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Create")
@@ -105,16 +106,16 @@ func (_mock *UrlService) Create(ctx context.Context, originalURL string) (string
 
 	var r0 string
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (string, error)); ok {
-		return returnFunc(ctx, originalURL)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) (string, error)); ok {
+		return returnFunc(ctx, userID, originalURL)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) string); ok {
-		r0 = returnFunc(ctx, originalURL)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) string); ok {
+		r0 = returnFunc(ctx, userID, originalURL)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = returnFunc(ctx, originalURL)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = returnFunc(ctx, userID, originalURL)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -128,14 +129,15 @@ type UrlService_Create_Call struct {
 
 // Create is a helper method to define mock.On call
 //   - ctx
+//   - userID
 //   - originalURL
-func (_e *UrlService_Expecter) Create(ctx interface{}, originalURL interface{}) *UrlService_Create_Call {
-	return &UrlService_Create_Call{Call: _e.mock.On("Create", ctx, originalURL)}
+func (_e *UrlService_Expecter) Create(ctx interface{}, userID interface{}, originalURL interface{}) *UrlService_Create_Call {
+	return &UrlService_Create_Call{Call: _e.mock.On("Create", ctx, userID, originalURL)}
 }
 
-func (_c *UrlService_Create_Call) Run(run func(ctx context.Context, originalURL string)) *UrlService_Create_Call {
+func (_c *UrlService_Create_Call) Run(run func(ctx context.Context, userID string, originalURL string)) *UrlService_Create_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
+		run(args[0].(context.Context), args[1].(string), args[2].(string))
 	})
 	return _c
 }
@@ -145,7 +147,7 @@ func (_c *UrlService_Create_Call) Return(s string, err error) *UrlService_Create
 	return _c
 }
 
-func (_c *UrlService_Create_Call) RunAndReturn(run func(ctx context.Context, originalURL string) (string, error)) *UrlService_Create_Call {
+func (_c *UrlService_Create_Call) RunAndReturn(run func(ctx context.Context, userID string, originalURL string) (string, error)) *UrlService_Create_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -201,6 +203,63 @@ func (_c *UrlService_Get_Call) Return(s string, err error) *UrlService_Get_Call 
 }
 
 func (_c *UrlService_Get_Call) RunAndReturn(run func(ctx context.Context, id string) (string, error)) *UrlService_Get_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetUserURLs provides a mock function for the type UrlService
+func (_mock *UrlService) GetUserURLs(ctx context.Context, userID string) ([]url.UserURL, error) {
+	ret := _mock.Called(ctx, userID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetUserURLs")
+	}
+
+	var r0 []url.UserURL
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) ([]url.UserURL, error)); ok {
+		return returnFunc(ctx, userID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) []url.UserURL); ok {
+		r0 = returnFunc(ctx, userID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]url.UserURL)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = returnFunc(ctx, userID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// UrlService_GetUserURLs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetUserURLs'
+type UrlService_GetUserURLs_Call struct {
+	*mock.Call
+}
+
+// GetUserURLs is a helper method to define mock.On call
+//   - ctx
+//   - userID
+func (_e *UrlService_Expecter) GetUserURLs(ctx interface{}, userID interface{}) *UrlService_GetUserURLs_Call {
+	return &UrlService_GetUserURLs_Call{Call: _e.mock.On("GetUserURLs", ctx, userID)}
+}
+
+func (_c *UrlService_GetUserURLs_Call) Run(run func(ctx context.Context, userID string)) *UrlService_GetUserURLs_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *UrlService_GetUserURLs_Call) Return(userURLs []url.UserURL, err error) *UrlService_GetUserURLs_Call {
+	_c.Call.Return(userURLs, err)
+	return _c
+}
+
+func (_c *UrlService_GetUserURLs_Call) RunAndReturn(run func(ctx context.Context, userID string) ([]url.UserURL, error)) *UrlService_GetUserURLs_Call {
 	_c.Call.Return(run)
 	return _c
 }

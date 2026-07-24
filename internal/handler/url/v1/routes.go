@@ -1,13 +1,15 @@
 package v1
 
 import (
+	"github.com/MaximVebDevJs/go-u-shr/internal/auth"
 	transporthttp "github.com/MaximVebDevJs/go-u-shr/internal/transport/http"
+	"github.com/MaximVebDevJs/go-u-shr/internal/transport/middleware"
 	"github.com/go-chi/chi/v5"
 	"go.uber.org/zap"
 )
 
-func RegisterRoutes(r chi.Router, h *Handler, log *zap.Logger) {
-	r.Post(
+func RegisterRoutes(r chi.Router, h *Handler, log *zap.Logger, signer *auth.Signer) {
+	r.With(middleware.EnsureAuthMiddleware(signer)).Post(
 		"/",
 		transporthttp.Wrap(h.CreateUrl, transporthttp.ErrorHandler, log),
 	)
@@ -19,11 +21,15 @@ func RegisterRoutes(r chi.Router, h *Handler, log *zap.Logger) {
 		"/{id}",
 		transporthttp.Wrap(h.GetUrl, transporthttp.ErrorHandler, log),
 	)
+	r.With(middleware.MustAuth(signer)).Get(
+		"/api/user/urls",
+		transporthttp.Wrap(h.GetUserURLs, transporthttp.ErrorHandler, log),
+	)
 	r.Route("/api/shorten", func(r chi.Router) {
-		r.Post(
+		r.With(middleware.EnsureAuthMiddleware(signer)).Post(
 			"/",
 			transporthttp.Wrap(h.CreateUrlJSON, transporthttp.ErrorHandler, log))
-		r.Post(
+		r.With(middleware.EnsureAuthMiddleware(signer)).Post(
 			"/batch",
 			transporthttp.Wrap(h.BatchUrls, transporthttp.ErrorHandler, log))
 		r.Get(

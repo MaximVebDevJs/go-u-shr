@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/MaximVebDevJs/go-u-shr/internal/auth"
 	apiUrlV1 "github.com/MaximVebDevJs/go-u-shr/internal/handler/url/v1"
 	"github.com/MaximVebDevJs/go-u-shr/internal/handler/url/v1/mocks"
 	"github.com/MaximVebDevJs/go-u-shr/internal/logger"
@@ -54,7 +55,7 @@ func TestPingHandler(t *testing.T) {
 			apiHandler := apiUrlV1.New(svc, log)
 
 			r := chi.NewRouter()
-			apiUrlV1.RegisterRoutes(r, apiHandler, log)
+			apiUrlV1.RegisterRoutes(r, apiHandler, log, auth.NewSigner("test-secret"))
 
 			req := httptest.NewRequest(http.MethodGet, "/ping", nil)
 			rec := httptest.NewRecorder()

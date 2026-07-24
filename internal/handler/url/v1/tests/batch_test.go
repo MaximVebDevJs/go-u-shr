@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/MaximVebDevJs/go-u-shr/internal/auth"
 	serviceurl "github.com/MaximVebDevJs/go-u-shr/internal/service/url"
 
 	apiUrlV1 "github.com/MaximVebDevJs/go-u-shr/internal/handler/url/v1"
@@ -22,7 +23,8 @@ import (
 func TestBatchUrlsHandler(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
+	userID := "user-1"
+	ctx := auth.WithUserID(context.Background(), userID)
 
 	tests := []struct {
 		name         string
@@ -39,7 +41,7 @@ func TestBatchUrlsHandler(t *testing.T) {
 			},
 			setupMock: func(svc *mocks.UrlService) {
 				svc.EXPECT().
-					BatchCreate(ctx, []serviceurl.BatchItem{
+					BatchCreate(ctx, userID, []serviceurl.BatchItem{
 						{CorrelationID: "1", OriginalURL: "https://example.com/a"},
 						{CorrelationID: "2", OriginalURL: "https://example.com/b"},
 					}).
@@ -59,7 +61,7 @@ func TestBatchUrlsHandler(t *testing.T) {
 			body: []map[string]string{},
 			setupMock: func(svc *mocks.UrlService) {
 				svc.EXPECT().
-					BatchCreate(ctx, []serviceurl.BatchItem{}).
+					BatchCreate(ctx, userID, []serviceurl.BatchItem{}).
 					Return([]serviceurl.BatchResult{}, nil)
 			},
 			expectedCode: http.StatusCreated,
@@ -106,7 +108,7 @@ func TestBatchUrlsHandler(t *testing.T) {
 			},
 			setupMock: func(svc *mocks.UrlService) {
 				svc.EXPECT().
-					BatchCreate(ctx, []serviceurl.BatchItem{
+					BatchCreate(ctx, userID, []serviceurl.BatchItem{
 						{CorrelationID: "1", OriginalURL: "https://example.com/a"},
 					}).
 					Return(nil, errors.New("internal error"))
@@ -125,7 +127,7 @@ func TestBatchUrlsHandler(t *testing.T) {
 			},
 			setupMock: func(svc *mocks.UrlService) {
 				svc.EXPECT().
-					BatchCreate(ctx, []serviceurl.BatchItem{
+					BatchCreate(ctx, userID, []serviceurl.BatchItem{
 						{CorrelationID: "1", OriginalURL: "https://example.com/a"},
 						{CorrelationID: "2", OriginalURL: "https://example.com/a"},
 					}).

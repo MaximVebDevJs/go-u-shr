@@ -7,8 +7,9 @@ import (
 )
 
 type UrlService interface {
-	Create(ctx context.Context, originalURL string) (string, error)
-	BatchCreate(ctx context.Context, items []serviceurl.BatchItem) ([]serviceurl.BatchResult, error)
+	Create(ctx context.Context, userID string, originalURL string) (string, error)
+	BatchCreate(ctx context.Context, userID string, items []serviceurl.BatchItem) ([]serviceurl.BatchResult, error)
 	Get(ctx context.Context, id string) (string, error)
+	GetUserURLs(ctx context.Context, userID string) ([]serviceurl.UserURL, error)
 	Ping(ctx context.Context) error
 }

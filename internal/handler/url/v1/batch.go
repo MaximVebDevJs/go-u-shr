@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/MaximVebDevJs/go-u-shr/internal/auth"
 	serviceurl "github.com/MaximVebDevJs/go-u-shr/internal/service/url"
 	transporthttp "github.com/MaximVebDevJs/go-u-shr/internal/transport/http"
 	"go.uber.org/zap"
@@ -54,7 +55,13 @@ func (h *Handler) BatchUrls(w http.ResponseWriter, r *http.Request) error {
 		})
 	}
 
-	results, err := h.urlService.BatchCreate(r.Context(), items)
+	userID, ok := auth.UserIDFromContext(r.Context())
+	if !ok {
+		w.WriteHeader(http.StatusUnauthorized)
+		return nil
+	}
+
+	results, err := h.urlService.BatchCreate(r.Context(), userID, items)
 	if err != nil {
 		var duplicateErr *serviceurl.DuplicateURLsError
 		if errors.As(err, &duplicateErr) {

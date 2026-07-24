@@ -11,7 +11,7 @@ import (
 // maxIDGenerationAttempts — сколько раз пробуем сгенерировать ID при коллизии.
 const maxIDGenerationAttempts = 5
 
-func (s *service) Create(ctx context.Context, originalURL string) (string, error) {
+func (s *service) Create(ctx context.Context, userID string, originalURL string) (string, error) {
 	if err := ctx.Err(); err != nil {
 		return "", fmt.Errorf("создать url: %w", err)
 	}
@@ -27,7 +27,7 @@ func (s *service) Create(ctx context.Context, originalURL string) (string, error
 			return "", fmt.Errorf("создать url: %w", err)
 		}
 
-		returnedID, err := s.urlRepo.Create(ctx, originalURL, id)
+		returnedID, err := s.urlRepo.Create(ctx, userID, originalURL, id)
 		if errors.Is(err, model.ErrOriginalURLExists) {
 			return s.baseURL + "/" + returnedID, ErrURLAlreadyExists
 		}

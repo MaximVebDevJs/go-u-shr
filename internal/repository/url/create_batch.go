@@ -11,9 +11,9 @@ import (
 // BatchRecord описывает одну запись для пакетной вставки.
 type BatchRecord = model.BatchRecord
 
-// CreateBatch сохраняет несколько URL в одной транзакции.
+// CreateBatch сохраняет несколько URL пользователя в одной транзакции.
 // Либо все строки записываются, либо ни одна (rollback при ошибке).
-func (r *Repository) CreateBatch(ctx context.Context, records []BatchRecord) error {
+func (r *Repository) CreateBatch(ctx context.Context, userID string, records []BatchRecord) error {
 	if len(records) == 0 {
 		return nil
 	}
@@ -37,7 +37,7 @@ func (r *Repository) CreateBatch(ctx context.Context, records []BatchRecord) err
 
 	for _, rec := range records {
 		// вставляем запись в БД
-		returnedID, insertErr := r.insertURL(ctx, tx, rec.OriginalURL, rec.ID)
+		returnedID, insertErr := r.insertURL(ctx, tx, userID, rec.OriginalURL, rec.ID)
 		if errors.Is(insertErr, ErrOriginalURLExists) {
 			conflicts = appendUniqueURL(conflicts, rec.OriginalURL)
 			continue
