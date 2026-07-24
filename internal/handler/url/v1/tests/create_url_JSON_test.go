@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/MaximVebDevJs/go-u-shr/internal/auth"
 	serviceurl "github.com/MaximVebDevJs/go-u-shr/internal/service/url"
 
 	apiUrlV1 "github.com/MaximVebDevJs/go-u-shr/internal/handler/url/v1"
@@ -23,7 +24,8 @@ func TestCreateUrlJSONHandler(t *testing.T) {
 	t.Parallel()
 
 	var (
-		ctx         = context.Background()
+		userID      = "user-1"
+		ctx         = auth.WithUserID(context.Background(), userID)
 		originalURL = "https://practicum.yandex.ru/"
 		shortURL    = "http://localhost:8080/abc123"
 	)
@@ -40,7 +42,7 @@ func TestCreateUrlJSONHandler(t *testing.T) {
 			body: map[string]string{"url": originalURL},
 			setupMock: func(svc *mocks.UrlService) {
 				svc.EXPECT().
-					Create(ctx, originalURL).
+					Create(ctx, userID, originalURL).
 					Return(shortURL, nil)
 			},
 			expectedCode: http.StatusCreated,
@@ -71,7 +73,7 @@ func TestCreateUrlJSONHandler(t *testing.T) {
 			body: map[string]string{"url": originalURL},
 			setupMock: func(svc *mocks.UrlService) {
 				svc.EXPECT().
-					Create(ctx, originalURL).
+					Create(ctx, userID, originalURL).
 					Return(shortURL, serviceurl.ErrURLAlreadyExists)
 			},
 			expectedCode: http.StatusConflict,
@@ -82,7 +84,7 @@ func TestCreateUrlJSONHandler(t *testing.T) {
 			body: map[string]string{"url": originalURL},
 			setupMock: func(svc *mocks.UrlService) {
 				svc.EXPECT().
-					Create(ctx, originalURL).
+					Create(ctx, userID, originalURL).
 					Return("", errors.New("internal error"))
 			},
 			expectedCode: http.StatusInternalServerError,

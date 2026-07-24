@@ -11,8 +11,13 @@ const createTableSQL = `
 CREATE TABLE IF NOT EXISTS urls (
 	id           BIGSERIAL PRIMARY KEY,
 	original_url TEXT NOT NULL UNIQUE,
-	uuid         VARCHAR(255) NOT NULL UNIQUE
+	uuid         VARCHAR(255) NOT NULL UNIQUE,
+	user_id      TEXT NOT NULL DEFAULT ''
 );`
+
+const addUserIDColumnSQL = `
+ALTER TABLE urls
+ADD COLUMN IF NOT EXISTS user_id TEXT NOT NULL DEFAULT '';`
 
 const createOriginalURLUniqueIndexSQL = `
 CREATE UNIQUE INDEX IF NOT EXISTS urls_original_url_uidx ON urls (original_url);`
@@ -24,6 +29,10 @@ func Migrate(ctx context.Context, pool *pgxpool.Pool) error {
 	}
 
 	if _, err := pool.Exec(ctx, createTableSQL); err != nil {
+		return fmt.Errorf("миграция urls: %w", err)
+	}
+
+	if _, err := pool.Exec(ctx, addUserIDColumnSQL); err != nil {
 		return fmt.Errorf("миграция urls: %w", err)
 	}
 

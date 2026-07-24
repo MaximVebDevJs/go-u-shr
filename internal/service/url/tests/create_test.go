@@ -19,6 +19,7 @@ func TestCreateUrlService(t *testing.T) {
 
 	var (
 		ctx         = context.Background()
+		userID      = "user-1"
 		originalURL = "https://practicum.yandex.ru/"
 		baseURL     = "http://localhost:8080"
 	)
@@ -37,6 +38,7 @@ func TestCreateUrlService(t *testing.T) {
 				repo.EXPECT().
 					Create(
 						ctx,
+						userID,
 						originalURL,
 						mock.Anything,
 					).
@@ -50,6 +52,7 @@ func TestCreateUrlService(t *testing.T) {
 				repo.EXPECT().
 					Create(
 						ctx,
+						userID,
 						originalURL,
 						mock.Anything,
 					).
@@ -80,6 +83,7 @@ func TestCreateUrlService(t *testing.T) {
 
 			result, err := svc.Create(
 				ctx,
+				userID,
 				tc.inputURL,
 			)
 

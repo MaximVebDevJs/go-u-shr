@@ -22,8 +22,8 @@ type BatchResult struct {
 	ShortURL      string
 }
 
-// BatchCreate сокращает несколько URL атомарно: pre-validation, затем одна транзакция в БД.
-func (s *service) BatchCreate(ctx context.Context, items []BatchItem) ([]BatchResult, error) {
+// BatchCreate сокращает несколько URL пользователя атомарно: pre-validation, затем одна транзакция в БД.
+func (s *service) BatchCreate(ctx context.Context, userID string, items []BatchItem) ([]BatchResult, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, fmt.Errorf("создать batch: %w", err)
 	}
@@ -56,7 +56,7 @@ func (s *service) BatchCreate(ctx context.Context, items []BatchItem) ([]BatchRe
 		}
 
 		// сохраняем записи в БД
-		err = s.urlRepo.CreateBatch(ctx, records)
+		err = s.urlRepo.CreateBatch(ctx, userID, records)
 		if err == nil {
 			return results, nil
 		}

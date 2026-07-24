@@ -7,6 +7,7 @@ package mocks
 import (
 	"context"
 
+	"github.com/MaximVebDevJs/go-u-shr/internal/model"
 	"github.com/MaximVebDevJs/go-u-shr/internal/repository/url"
 	mock "github.com/stretchr/testify/mock"
 )
@@ -39,8 +40,8 @@ func (_m *UrlRepository) EXPECT() *UrlRepository_Expecter {
 }
 
 // Create provides a mock function for the type UrlRepository
-func (_mock *UrlRepository) Create(ctx context.Context, originalURL string, id string) (string, error) {
-	ret := _mock.Called(ctx, originalURL, id)
+func (_mock *UrlRepository) Create(ctx context.Context, userID string, originalURL string, id string) (string, error) {
+	ret := _mock.Called(ctx, userID, originalURL, id)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Create")
@@ -48,16 +49,16 @@ func (_mock *UrlRepository) Create(ctx context.Context, originalURL string, id s
 
 	var r0 string
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) (string, error)); ok {
-		return returnFunc(ctx, originalURL, id)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) (string, error)); ok {
+		return returnFunc(ctx, userID, originalURL, id)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) string); ok {
-		r0 = returnFunc(ctx, originalURL, id)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) string); ok {
+		r0 = returnFunc(ctx, userID, originalURL, id)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
-		r1 = returnFunc(ctx, originalURL, id)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string) error); ok {
+		r1 = returnFunc(ctx, userID, originalURL, id)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -71,15 +72,16 @@ type UrlRepository_Create_Call struct {
 
 // Create is a helper method to define mock.On call
 //   - ctx
+//   - userID
 //   - originalURL
 //   - id
-func (_e *UrlRepository_Expecter) Create(ctx interface{}, originalURL interface{}, id interface{}) *UrlRepository_Create_Call {
-	return &UrlRepository_Create_Call{Call: _e.mock.On("Create", ctx, originalURL, id)}
+func (_e *UrlRepository_Expecter) Create(ctx interface{}, userID interface{}, originalURL interface{}, id interface{}) *UrlRepository_Create_Call {
+	return &UrlRepository_Create_Call{Call: _e.mock.On("Create", ctx, userID, originalURL, id)}
 }
 
-func (_c *UrlRepository_Create_Call) Run(run func(ctx context.Context, originalURL string, id string)) *UrlRepository_Create_Call {
+func (_c *UrlRepository_Create_Call) Run(run func(ctx context.Context, userID string, originalURL string, id string)) *UrlRepository_Create_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string))
+		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string))
 	})
 	return _c
 }
@@ -89,22 +91,22 @@ func (_c *UrlRepository_Create_Call) Return(s string, err error) *UrlRepository_
 	return _c
 }
 
-func (_c *UrlRepository_Create_Call) RunAndReturn(run func(ctx context.Context, originalURL string, id string) (string, error)) *UrlRepository_Create_Call {
+func (_c *UrlRepository_Create_Call) RunAndReturn(run func(ctx context.Context, userID string, originalURL string, id string) (string, error)) *UrlRepository_Create_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // CreateBatch provides a mock function for the type UrlRepository
-func (_mock *UrlRepository) CreateBatch(ctx context.Context, records []url.BatchRecord) error {
-	ret := _mock.Called(ctx, records)
+func (_mock *UrlRepository) CreateBatch(ctx context.Context, userID string, records []url.BatchRecord) error {
+	ret := _mock.Called(ctx, userID, records)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreateBatch")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, []url.BatchRecord) error); ok {
-		r0 = returnFunc(ctx, records)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, []url.BatchRecord) error); ok {
+		r0 = returnFunc(ctx, userID, records)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -118,14 +120,15 @@ type UrlRepository_CreateBatch_Call struct {
 
 // CreateBatch is a helper method to define mock.On call
 //   - ctx
+//   - userID
 //   - records
-func (_e *UrlRepository_Expecter) CreateBatch(ctx interface{}, records interface{}) *UrlRepository_CreateBatch_Call {
-	return &UrlRepository_CreateBatch_Call{Call: _e.mock.On("CreateBatch", ctx, records)}
+func (_e *UrlRepository_Expecter) CreateBatch(ctx interface{}, userID interface{}, records interface{}) *UrlRepository_CreateBatch_Call {
+	return &UrlRepository_CreateBatch_Call{Call: _e.mock.On("CreateBatch", ctx, userID, records)}
 }
 
-func (_c *UrlRepository_CreateBatch_Call) Run(run func(ctx context.Context, records []url.BatchRecord)) *UrlRepository_CreateBatch_Call {
+func (_c *UrlRepository_CreateBatch_Call) Run(run func(ctx context.Context, userID string, records []url.BatchRecord)) *UrlRepository_CreateBatch_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].([]url.BatchRecord))
+		run(args[0].(context.Context), args[1].(string), args[2].([]url.BatchRecord))
 	})
 	return _c
 }
@@ -135,7 +138,7 @@ func (_c *UrlRepository_CreateBatch_Call) Return(err error) *UrlRepository_Creat
 	return _c
 }
 
-func (_c *UrlRepository_CreateBatch_Call) RunAndReturn(run func(ctx context.Context, records []url.BatchRecord) error) *UrlRepository_CreateBatch_Call {
+func (_c *UrlRepository_CreateBatch_Call) RunAndReturn(run func(ctx context.Context, userID string, records []url.BatchRecord) error) *UrlRepository_CreateBatch_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -191,6 +194,63 @@ func (_c *UrlRepository_Get_Call) Return(s string, err error) *UrlRepository_Get
 }
 
 func (_c *UrlRepository_Get_Call) RunAndReturn(run func(ctx context.Context, id string) (string, error)) *UrlRepository_Get_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetUserURLs provides a mock function for the type UrlRepository
+func (_mock *UrlRepository) GetUserURLs(ctx context.Context, userID string) ([]model.UserURL, error) {
+	ret := _mock.Called(ctx, userID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetUserURLs")
+	}
+
+	var r0 []model.UserURL
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) ([]model.UserURL, error)); ok {
+		return returnFunc(ctx, userID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) []model.UserURL); ok {
+		r0 = returnFunc(ctx, userID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]model.UserURL)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = returnFunc(ctx, userID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// UrlRepository_GetUserURLs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetUserURLs'
+type UrlRepository_GetUserURLs_Call struct {
+	*mock.Call
+}
+
+// GetUserURLs is a helper method to define mock.On call
+//   - ctx
+//   - userID
+func (_e *UrlRepository_Expecter) GetUserURLs(ctx interface{}, userID interface{}) *UrlRepository_GetUserURLs_Call {
+	return &UrlRepository_GetUserURLs_Call{Call: _e.mock.On("GetUserURLs", ctx, userID)}
+}
+
+func (_c *UrlRepository_GetUserURLs_Call) Run(run func(ctx context.Context, userID string)) *UrlRepository_GetUserURLs_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *UrlRepository_GetUserURLs_Call) Return(userURLs []model.UserURL, err error) *UrlRepository_GetUserURLs_Call {
+	_c.Call.Return(userURLs, err)
+	return _c
+}
+
+func (_c *UrlRepository_GetUserURLs_Call) RunAndReturn(run func(ctx context.Context, userID string) ([]model.UserURL, error)) *UrlRepository_GetUserURLs_Call {
 	_c.Call.Return(run)
 	return _c
 }

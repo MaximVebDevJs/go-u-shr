@@ -1,8 +1,11 @@
 package app
 
 import (
+	"fmt"
 	"net/http"
+	"strings"
 
+	"github.com/MaximVebDevJs/go-u-shr/internal/auth"
 	"github.com/MaximVebDevJs/go-u-shr/internal/config"
 	apiUrlV1 "github.com/MaximVebDevJs/go-u-shr/internal/handler/url/v1"
 	urlRepo "github.com/MaximVebDevJs/go-u-shr/internal/repository/url"
@@ -15,10 +18,15 @@ import (
 )
 
 func NewHTTPHandler(cfg *config.Config, log *zap.Logger, pool *pgxpool.Pool) (http.Handler, error) {
+	if strings.TrimSpace(cfg.AuthSecret) == "" {
+		return nil, fmt.Errorf("auth secret is required")
+	}
+
 	repo := urlRepo.New(pool)
 
 	svc := urlService.New(repo, cfg.BaseURL)
 	handler := apiUrlV1.New(svc, log)
+	signer := auth.NewSigner(cfg.AuthSecret)
 
 	r := chi.NewRouter()
 	// Recoverer перехватывает panic в handlers/middleware и отдаёт 500 вместо падения процесса.
@@ -27,7 +35,7 @@ func NewHTTPHandler(cfg *config.Config, log *zap.Logger, pool *pgxpool.Pool) (ht
 	r.Use(middleware.CompressMiddleware)
 	r.Use(middleware.RequestLogger(log))
 
-	apiUrlV1.RegisterRoutes(r, handler, log)
+	apiUrlV1.RegisterRoutes(r, handler, log, signer)
 
 	return r, nil
 }

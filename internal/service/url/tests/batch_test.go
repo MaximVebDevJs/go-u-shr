@@ -18,6 +18,7 @@ func TestBatchCreateUrlService(t *testing.T) {
 
 	var (
 		ctx     = context.Background()
+		userID  = "user-1"
 		baseURL = "http://localhost:8080"
 	)
 
@@ -36,8 +37,9 @@ func TestBatchCreateUrlService(t *testing.T) {
 			},
 			setupMock: func(repo *mocks.UrlRepository) {
 				repo.EXPECT().
-					CreateBatch(ctx, mock.Anything).
-					RunAndReturn(func(_ context.Context, records []urlRepo.BatchRecord) error {
+					CreateBatch(ctx, userID, mock.Anything).
+					RunAndReturn(func(_ context.Context, gotUserID string, records []urlRepo.BatchRecord) error {
+						assert.Equal(t, userID, gotUserID)
 						require.Len(t, records, 2)
 						assert.Equal(t, "https://example.com/a", records[0].OriginalURL)
 						assert.Equal(t, "https://example.com/b", records[1].OriginalURL)
@@ -103,7 +105,7 @@ func TestBatchCreateUrlService(t *testing.T) {
 
 			svc := urlService.New(repo, baseURL)
 
-			results, err := svc.BatchCreate(ctx, tc.items)
+			results, err := svc.BatchCreate(ctx, userID, tc.items)
 
 			if tc.expectedErr != nil {
 				require.Error(t, err)

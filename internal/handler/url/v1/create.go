@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/MaximVebDevJs/go-u-shr/internal/auth"
 	serviceurl "github.com/MaximVebDevJs/go-u-shr/internal/service/url"
 	transporthttp "github.com/MaximVebDevJs/go-u-shr/internal/transport/http"
 	"go.uber.org/zap"
@@ -24,7 +25,13 @@ func (h *Handler) CreateUrl(w http.ResponseWriter, r *http.Request) error {
 
 	originalURL := strings.TrimSpace(string(body))
 
-	shortURL, err := h.urlService.Create(r.Context(), originalURL)
+	userID, ok := auth.UserIDFromContext(r.Context())
+	if !ok {
+		w.WriteHeader(http.StatusUnauthorized)
+		return nil
+	}
+
+	shortURL, err := h.urlService.Create(r.Context(), userID, originalURL)
 	if err != nil {
 		if errors.Is(err, serviceurl.ErrURLAlreadyExists) {
 			w.Header().Set("Content-Type", "text/plain")

@@ -8,7 +8,8 @@ import (
 
 type UrlRepository interface {
 	Get(ctx context.Context, id string) (string, error)
-	Create(ctx context.Context, originalURL string, id string) (string, error)
-	CreateBatch(ctx context.Context, records []model.BatchRecord) error
+	Create(ctx context.Context, userID string, originalURL string, id string) (string, error)
+	CreateBatch(ctx context.Context, userID string, records []model.BatchRecord) error
+	GetUserURLs(ctx context.Context, userID string) ([]model.UserURL, error)
 	Ping(ctx context.Context) error
 }

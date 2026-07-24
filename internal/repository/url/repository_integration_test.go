@@ -65,11 +65,12 @@ func TestRepositoryCreateAndGet(t *testing.T) {
 	repo, _ := setupTestRepository(t)
 
 	const (
+		userID      = "user-1"
 		id          = "abc12345"
 		originalURL = "https://example.com/page"
 	)
 
-	_, err := repo.Create(ctx, originalURL, id)
+	_, err := repo.Create(ctx, userID, originalURL, id)
 	require.NoError(t, err)
 
 	got, err := repo.Get(ctx, id)
@@ -95,7 +96,7 @@ func TestRepositoryCreateBatchAndGet(t *testing.T) {
 		{OriginalURL: "https://example.com/b", ID: "batch0002"},
 	}
 
-	require.NoError(t, repo.CreateBatch(ctx, records))
+	require.NoError(t, repo.CreateBatch(ctx, "user-1", records))
 
 	for _, record := range records {
 		got, err := repo.Get(ctx, record.ID)
@@ -104,19 +105,40 @@ func TestRepositoryCreateBatchAndGet(t *testing.T) {
 	}
 }
 
+func TestRepositoryGetUserURLs(t *testing.T) {
+	ctx := context.Background()
+	repo, _ := setupTestRepository(t)
+
+	const userID = "user-1"
+
+	_, err := repo.Create(ctx, userID, "https://example.com/a", "user0001")
+	require.NoError(t, err)
+
+	_, err = repo.Create(ctx, "user-2", "https://example.com/b", "user0002")
+	require.NoError(t, err)
+
+	got, err := repo.GetUserURLs(ctx, userID)
+	require.NoError(t, err)
+
+	require.Len(t, got, 1)
+	assert.Equal(t, "user0001", got[0].ShortID)
+	assert.Equal(t, "https://example.com/a", got[0].OriginalURL)
+}
+
 func TestRepositoryCreateDuplicateOriginalURL(t *testing.T) {
 	ctx := context.Background()
 	repo, _ := setupTestRepository(t)
 
 	const (
+		userID      = "user-1"
 		existingID  = "exist001"
 		originalURL = "https://example.com/same"
 	)
 
-	_, err := repo.Create(ctx, originalURL, existingID)
+	_, err := repo.Create(ctx, userID, originalURL, existingID)
 	require.NoError(t, err)
 
-	returnedID, err := repo.Create(ctx, originalURL, "newalias")
+	returnedID, err := repo.Create(ctx, userID, originalURL, "newalias")
 	require.Error(t, err)
 	assert.ErrorIs(t, err, urlRepo.ErrOriginalURLExists)
 	assert.Equal(t, existingID, returnedID)
@@ -128,10 +150,10 @@ func TestRepositoryCreateDuplicateReturnsError(t *testing.T) {
 
 	const id = "dup12345"
 
-	_, err := repo.Create(ctx, "https://example.com/a", id)
+	_, err := repo.Create(ctx, "user-1", "https://example.com/a", id)
 	require.NoError(t, err)
 
-	_, err = repo.Create(ctx, "https://example.com/b", id)
+	_, err = repo.Create(ctx, "user-1", "https://example.com/b", id)
 	require.Error(t, err)
 	assert.ErrorIs(t, err, urlRepo.ErrAlreadyExists)
 
@@ -158,7 +180,7 @@ func TestRepositoryCreateConcurrent(t *testing.T) {
 			id := fmt.Sprintf("worker%02d", n)
 			originalURL := "https://example.com/" + id
 
-			returnedID, createErr := repo.Create(ctx, originalURL, id)
+			returnedID, createErr := repo.Create(ctx, "user-1", originalURL, id)
 			errCh <- createErr
 			if createErr == nil {
 				assert.Equal(t, id, returnedID)
