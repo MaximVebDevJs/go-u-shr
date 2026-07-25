@@ -12,14 +12,20 @@ func (r *Repository) Get(ctx context.Context, id string) (string, error) {
 	}
 
 	const query = `
-		SELECT original_url FROM urls WHERE uuid = $1
+		SELECT original_url, is_deleted FROM urls WHERE uuid = $1
 	`
 
 	var originalURL string
+	var isDeleted bool
 
-	err := r.getter.DefaultTrOrDB(ctx, r.pool).QueryRow(ctx, query, id).Scan(&originalURL)
+	err := r.getter.DefaultTrOrDB(ctx, r.pool).QueryRow(ctx, query, id).Scan(&originalURL, &isDeleted)
 	if err != nil {
 		return "", mapGetError(err)
+	}
+
+	if isDeleted {
+		// Удалённая запись существует в БД, но публичный GET должен отвечать 410 Gone.
+		return "", ErrDeleted
 	}
 
 	return originalURL, nil

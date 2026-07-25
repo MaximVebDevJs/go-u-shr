@@ -125,6 +125,39 @@ func TestRepositoryGetUserURLs(t *testing.T) {
 	assert.Equal(t, "https://example.com/a", got[0].OriginalURL)
 }
 
+func TestRepositoryMarkDeleted(t *testing.T) {
+	ctx := context.Background()
+	repo, _ := setupTestRepository(t)
+
+	_, err := repo.Create(ctx, "user-1", "https://example.com/a", "delete01")
+	require.NoError(t, err)
+
+	_, err = repo.Create(ctx, "user-1", "https://example.com/b", "delete02")
+	require.NoError(t, err)
+
+	_, err = repo.Create(ctx, "user-2", "https://example.com/c", "delete03")
+	require.NoError(t, err)
+
+	err = repo.MarkDeleted(ctx, "user-1", []string{"delete01", "delete02", "delete01", "missing", "delete03"})
+	require.NoError(t, err)
+
+	_, err = repo.Get(ctx, "delete01")
+	require.Error(t, err)
+	assert.ErrorIs(t, err, urlRepo.ErrDeleted)
+
+	_, err = repo.Get(ctx, "delete02")
+	require.Error(t, err)
+	assert.ErrorIs(t, err, urlRepo.ErrDeleted)
+
+	got, err := repo.Get(ctx, "delete03")
+	require.NoError(t, err)
+	assert.Equal(t, "https://example.com/c", got)
+
+	userURLs, err := repo.GetUserURLs(ctx, "user-1")
+	require.NoError(t, err)
+	assert.Empty(t, userURLs)
+}
+
 func TestRepositoryCreateDuplicateOriginalURL(t *testing.T) {
 	ctx := context.Background()
 	repo, _ := setupTestRepository(t)

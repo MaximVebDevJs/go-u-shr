@@ -6,7 +6,6 @@ import (
 
 	urlRepo "github.com/MaximVebDevJs/go-u-shr/internal/repository/url"
 	errs "github.com/MaximVebDevJs/go-u-shr/internal/service/url"
-	urlService "github.com/MaximVebDevJs/go-u-shr/internal/service/url"
 	"github.com/MaximVebDevJs/go-u-shr/internal/service/url/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -53,6 +52,17 @@ func TestGetUrlService(t *testing.T) {
 			expectedErr: errs.ErrUrlNotFound,
 		},
 		{
+			name: "url удалён в репозитории",
+			id:   id,
+			setupMock: func(repo *mocks.UrlRepository) {
+				repo.EXPECT().
+					Get(ctx, id).
+					Return("", urlRepo.ErrDeleted)
+			},
+			expectedURL: "",
+			expectedErr: errs.ErrURLDeleted,
+		},
+		{
 			name: "ошибка получения URL из репозитория (legacy mock)",
 			id:   id,
 			setupMock: func(repo *mocks.UrlRepository) {
@@ -75,7 +85,7 @@ func TestGetUrlService(t *testing.T) {
 				tc.setupMock(repo)
 			}
 
-			svc := urlService.New(repo, baseURL)
+			svc := newURLService(t, repo, baseURL)
 
 			result, err := svc.Get(ctx, tc.id)
 

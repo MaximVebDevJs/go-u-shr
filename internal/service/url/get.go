@@ -15,9 +15,12 @@ func (s *service) Get(ctx context.Context, id string) (string, error) {
 
 	url, err := s.urlRepo.Get(ctx, id)
 	if err != nil {
-		// Маппим инфраструктурную ошибку в доменную, чтобы HTTP-слой отдал 404, а не 500.
+		// Маппим инфраструктурные ошибки в сервисные, чтобы HTTP-слой выбрал публичный статус.
 		if errors.Is(err, model.ErrURLNotFound) {
 			return "", ErrUrlNotFound
+		}
+		if errors.Is(err, model.ErrURLDeleted) {
+			return "", ErrURLDeleted
 		}
 
 		return "", fmt.Errorf("получить url: %w", err)

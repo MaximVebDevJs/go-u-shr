@@ -255,6 +255,53 @@ func (_c *UrlRepository_GetUserURLs_Call) RunAndReturn(run func(ctx context.Cont
 	return _c
 }
 
+// MarkDeleted provides a mock function for the type UrlRepository
+func (_mock *UrlRepository) MarkDeleted(ctx context.Context, userID string, ids []string) error {
+	ret := _mock.Called(ctx, userID, ids)
+
+	if len(ret) == 0 {
+		panic("no return value specified for MarkDeleted")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, []string) error); ok {
+		r0 = returnFunc(ctx, userID, ids)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// UrlRepository_MarkDeleted_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'MarkDeleted'
+type UrlRepository_MarkDeleted_Call struct {
+	*mock.Call
+}
+
+// MarkDeleted is a helper method to define mock.On call
+//   - ctx
+//   - userID
+//   - ids
+func (_e *UrlRepository_Expecter) MarkDeleted(ctx interface{}, userID interface{}, ids interface{}) *UrlRepository_MarkDeleted_Call {
+	return &UrlRepository_MarkDeleted_Call{Call: _e.mock.On("MarkDeleted", ctx, userID, ids)}
+}
+
+func (_c *UrlRepository_MarkDeleted_Call) Run(run func(ctx context.Context, userID string, ids []string)) *UrlRepository_MarkDeleted_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string), args[2].([]string))
+	})
+	return _c
+}
+
+func (_c *UrlRepository_MarkDeleted_Call) Return(err error) *UrlRepository_MarkDeleted_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *UrlRepository_MarkDeleted_Call) RunAndReturn(run func(ctx context.Context, userID string, ids []string) error) *UrlRepository_MarkDeleted_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Ping provides a mock function for the type UrlRepository
 func (_mock *UrlRepository) Ping(ctx context.Context) error {
 	ret := _mock.Called(ctx)

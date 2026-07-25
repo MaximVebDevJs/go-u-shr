@@ -25,6 +25,11 @@ func RegisterRoutes(r chi.Router, h *Handler, log *zap.Logger, signer *auth.Sign
 		"/api/user/urls",
 		transporthttp.Wrap(h.GetUserURLs, transporthttp.ErrorHandler, log),
 	)
+	// DELETE принимает задачу удаления только от аутентифицированного владельца cookie.
+	r.With(middleware.MustAuth(signer)).Delete(
+		"/api/user/urls",
+		transporthttp.Wrap(h.DeleteUrls, transporthttp.ErrorHandler, log),
+	)
 	r.Route("/api/shorten", func(r chi.Router) {
 		r.With(middleware.EnsureAuthMiddleware(signer)).Post(
 			"/",

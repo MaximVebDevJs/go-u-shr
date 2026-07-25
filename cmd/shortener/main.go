@@ -69,10 +69,19 @@ func main() {
 
 func run(ctx context.Context, cfg *config.Config, log *zap.Logger, pool *pgxpool.Pool) error {
 	// Создать HTTP-обработчик через фабрику приложения.
-	handler, err := app.NewHTTPHandler(cfg, log, pool)
+	handler, cleanup, err := app.NewHTTPHandler(cfg, log, pool)
 	if err != nil {
 		return fmt.Errorf("создание HTTP handler: %w", err)
 	}
+	defer func() {
+		cleanupCtx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
+		defer cancel()
+
+		// Service cleanup останавливает фоновые worker-ы после того, как HTTP перестал принимать новые запросы.
+		if cleanupErr := cleanup(cleanupCtx); cleanupErr != nil {
+			log.Error("ошибка остановки фоновых задач", zap.Error(cleanupErr))
+		}
+	}()
 
 	httpServer := &http.Server{
 		Addr:         cfg.ServerAddr,

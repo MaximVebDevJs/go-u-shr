@@ -103,7 +103,7 @@ func TestBatchCreateUrlService(t *testing.T) {
 				tc.setupMock(repo)
 			}
 
-			svc := urlService.New(repo, baseURL)
+			svc := newURLService(t, repo, baseURL)
 
 			results, err := svc.BatchCreate(ctx, userID, tc.items)
 
