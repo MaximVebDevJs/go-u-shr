@@ -152,6 +152,53 @@ func (_c *UrlService_Create_Call) RunAndReturn(run func(ctx context.Context, use
 	return _c
 }
 
+// DeleteUrls provides a mock function for the type UrlService
+func (_mock *UrlService) DeleteUrls(ctx context.Context, userID string, ids []string) error {
+	ret := _mock.Called(ctx, userID, ids)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteUrls")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, []string) error); ok {
+		r0 = returnFunc(ctx, userID, ids)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// UrlService_DeleteUrls_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteUrls'
+type UrlService_DeleteUrls_Call struct {
+	*mock.Call
+}
+
+// DeleteUrls is a helper method to define mock.On call
+//   - ctx
+//   - userID
+//   - ids
+func (_e *UrlService_Expecter) DeleteUrls(ctx interface{}, userID interface{}, ids interface{}) *UrlService_DeleteUrls_Call {
+	return &UrlService_DeleteUrls_Call{Call: _e.mock.On("DeleteUrls", ctx, userID, ids)}
+}
+
+func (_c *UrlService_DeleteUrls_Call) Run(run func(ctx context.Context, userID string, ids []string)) *UrlService_DeleteUrls_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string), args[2].([]string))
+	})
+	return _c
+}
+
+func (_c *UrlService_DeleteUrls_Call) Return(err error) *UrlService_DeleteUrls_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *UrlService_DeleteUrls_Call) RunAndReturn(run func(ctx context.Context, userID string, ids []string) error) *UrlService_DeleteUrls_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Get provides a mock function for the type UrlService
 func (_mock *UrlService) Get(ctx context.Context, id string) (string, error) {
 	ret := _mock.Called(ctx, id)

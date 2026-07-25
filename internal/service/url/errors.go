@@ -6,6 +6,7 @@ var (
 	ErrInvalidUrl       = errors.New("невалидный url")
 	ErrInvalidJSON      = errors.New("невалидный JSON")
 	ErrUrlNotFound      = errors.New("url не найден")
+	ErrURLDeleted       = errors.New("url удалён")
 	ErrURLAlreadyExists = errors.New("url уже существует")
 )
 

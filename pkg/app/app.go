@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strings"
@@ -17,14 +18,15 @@ import (
 	"go.uber.org/zap"
 )
 
-func NewHTTPHandler(cfg *config.Config, log *zap.Logger, pool *pgxpool.Pool) (http.Handler, error) {
+// NewHTTPHandler собирает HTTP router и возвращает cleanup для фоновых задач приложения.
+func NewHTTPHandler(cfg *config.Config, log *zap.Logger, pool *pgxpool.Pool) (http.Handler, func(context.Context) error, error) {
 	if strings.TrimSpace(cfg.AuthSecret) == "" {
-		return nil, fmt.Errorf("auth secret is required")
+		return nil, nil, fmt.Errorf("auth secret is required")
 	}
 
 	repo := urlRepo.New(pool)
 
-	svc := urlService.New(repo, cfg.BaseURL)
+	svc := urlService.New(repo, cfg.BaseURL, log)
 	handler := apiUrlV1.New(svc, log)
 	signer := auth.NewSigner(cfg.AuthSecret)
 
@@ -37,5 +39,6 @@ func NewHTTPHandler(cfg *config.Config, log *zap.Logger, pool *pgxpool.Pool) (ht
 
 	apiUrlV1.RegisterRoutes(r, handler, log, signer)
 
-	return r, nil
+	// Cleanup отдаём наружу, чтобы владелец HTTP-сервера остановил service-owned worker на shutdown.
+	return r, svc.Close, nil
 }

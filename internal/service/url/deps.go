@@ -11,5 +11,6 @@ type UrlRepository interface {
 	Create(ctx context.Context, userID string, originalURL string, id string) (string, error)
 	CreateBatch(ctx context.Context, userID string, records []model.BatchRecord) error
 	GetUserURLs(ctx context.Context, userID string) ([]model.UserURL, error)
+	MarkDeleted(ctx context.Context, userID string, ids []string) error
 	Ping(ctx context.Context) error
 }

@@ -45,6 +45,14 @@ func TestGetUrlHandler(t *testing.T) {
 			expectedCode: http.StatusNotFound,
 			expectedURL:  "",
 		},
+		{
+			name: "Урл удалён",
+			setupMock: func(svc *mocks.UrlService) {
+				svc.EXPECT().Get(mock.Anything, id).Return("", serviceurl.ErrURLDeleted)
+			},
+			expectedCode: http.StatusGone,
+			expectedURL:  "",
+		},
 	}
 
 	for _, tc := range tests {

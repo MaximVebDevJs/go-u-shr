@@ -11,5 +11,6 @@ type UrlService interface {
 	BatchCreate(ctx context.Context, userID string, items []serviceurl.BatchItem) ([]serviceurl.BatchResult, error)
 	Get(ctx context.Context, id string) (string, error)
 	GetUserURLs(ctx context.Context, userID string) ([]serviceurl.UserURL, error)
+	DeleteUrls(ctx context.Context, userID string, ids []string) error
 	Ping(ctx context.Context) error
 }

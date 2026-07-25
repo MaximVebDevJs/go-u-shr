@@ -45,6 +45,10 @@ func mapError(err error) (int, string) {
 	case errors.Is(err, svc.ErrUrlNotFound):
 		return http.StatusNotFound, err.Error()
 
+	// 410 Gone
+	case errors.Is(err, svc.ErrURLDeleted):
+		return http.StatusGone, err.Error()
+
 	// 400 Bad Request
 	case errors.Is(err, svc.ErrInvalidUrl):
 		return http.StatusBadRequest, err.Error()

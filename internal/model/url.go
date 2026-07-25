@@ -11,6 +11,9 @@ var (
 
 	// ErrOriginalURLExists возвращается, когда original_url уже есть в хранилище.
 	ErrOriginalURLExists = errors.New("original url уже существует")
+
+	// ErrURLDeleted возвращается, когда alias найден, но помечен удалённым.
+	ErrURLDeleted = errors.New("url удалён")
 )
 
 // BatchRecord описывает одну доменную запись для пакетного сохранения URL.

@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/MaximVebDevJs/go-u-shr/internal/model"
-	urlService "github.com/MaximVebDevJs/go-u-shr/internal/service/url"
 	"github.com/MaximVebDevJs/go-u-shr/internal/service/url/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -27,7 +26,7 @@ func TestGetUserURLsService(t *testing.T) {
 			{ShortID: "abc12345", OriginalURL: "https://example.com/a"},
 		}, nil)
 
-	svc := urlService.New(repo, baseURL)
+	svc := newURLService(t, repo, baseURL)
 
 	got, err := svc.GetUserURLs(ctx, userID)
 	require.NoError(t, err)

@@ -79,7 +79,7 @@ func TestCreateUrlService(t *testing.T) {
 				tc.setupMock(repo)
 			}
 
-			svc := urlService.New(repo, baseURL)
+			svc := newURLService(t, repo, baseURL)
 
 			result, err := svc.Create(
 				ctx,

@@ -11,6 +11,9 @@ var (
 
 	// ErrOriginalURLExists возвращается, когда original_url уже есть в хранилище.
 	ErrOriginalURLExists = model.ErrOriginalURLExists
+
+	// ErrDeleted возвращается, когда запись найдена, но помечена удалённой.
+	ErrDeleted = model.ErrURLDeleted
 )
 
 // DuplicateOriginalURLsError содержит список original_url, вызвавших конфликт в batch.

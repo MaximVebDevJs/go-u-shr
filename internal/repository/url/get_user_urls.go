@@ -22,6 +22,7 @@ func (r *Repository) GetUserURLs(
 		SELECT uuid, original_url
 		FROM urls
 		WHERE user_id=$1
+		  AND is_deleted = FALSE
 		ORDER BY id
 		`,
 		userID,
