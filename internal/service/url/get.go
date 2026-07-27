@@ -8,7 +8,7 @@ import (
 	"github.com/MaximVebDevJs/go-u-shr/internal/model"
 )
 
-func (s *service) Get(ctx context.Context, id string) (string, error) {
+func (s *Service) Get(ctx context.Context, id string) (string, error) {
 	if err := ctx.Err(); err != nil {
 		return "", fmt.Errorf("получить url: %w", err)
 	}

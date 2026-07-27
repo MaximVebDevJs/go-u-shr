@@ -6,7 +6,7 @@ import (
 )
 
 // GetUserURLs возвращает все сокращенные URL пользователя.
-func (s *service) GetUserURLs(ctx context.Context, userID string) ([]UserURL, error) {
+func (s *Service) GetUserURLs(ctx context.Context, userID string) ([]UserURL, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, fmt.Errorf("получить ссылки пользователя: %w", err)
 	}

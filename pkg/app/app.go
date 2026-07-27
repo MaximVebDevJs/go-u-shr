@@ -31,6 +31,8 @@ func NewHTTPHandler(cfg *config.Config, log *zap.Logger, pool *pgxpool.Pool) (ht
 	signer := auth.NewSigner(cfg.AuthSecret)
 
 	r := chi.NewRouter()
+	// RequestID идёт первым: его значение попадает в лог запроса и в лог ошибки.
+	r.Use(chiMiddleware.RequestID)
 	// Recoverer перехватывает panic в handlers/middleware и отдаёт 500 вместо падения процесса.
 	r.Use(chiMiddleware.Recoverer)
 	r.Use(middleware.DecompressMiddleware)

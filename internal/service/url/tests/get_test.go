@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	urlRepo "github.com/MaximVebDevJs/go-u-shr/internal/repository/url"
+	"github.com/MaximVebDevJs/go-u-shr/internal/model"
 	errs "github.com/MaximVebDevJs/go-u-shr/internal/service/url"
 	"github.com/MaximVebDevJs/go-u-shr/internal/service/url/mocks"
 	"github.com/stretchr/testify/assert"
@@ -46,7 +46,7 @@ func TestGetUrlService(t *testing.T) {
 			setupMock: func(repo *mocks.UrlRepository) {
 				repo.EXPECT().
 					Get(ctx, id).
-					Return("", urlRepo.ErrNotFound)
+					Return("", model.ErrURLNotFound)
 			},
 			expectedURL: "",
 			expectedErr: errs.ErrUrlNotFound,
@@ -57,7 +57,7 @@ func TestGetUrlService(t *testing.T) {
 			setupMock: func(repo *mocks.UrlRepository) {
 				repo.EXPECT().
 					Get(ctx, id).
-					Return("", urlRepo.ErrDeleted)
+					Return("", model.ErrURLDeleted)
 			},
 			expectedURL: "",
 			expectedErr: errs.ErrURLDeleted,

@@ -2,13 +2,28 @@ package auth
 
 import (
 	"crypto/hmac"
+	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
+	"fmt"
 	"strings"
 )
 
+// secretSize — длина генерируемого секрета в байтах (совпадает с размером блока HMAC-SHA256).
+const secretSize = 32
+
 type Signer struct {
 	secret []byte
+}
+
+// GenerateSecret возвращает случайный секрет для подписи cookie в hex-представлении.
+func GenerateSecret() (string, error) {
+	secret := make([]byte, secretSize)
+	if _, err := rand.Read(secret); err != nil {
+		return "", fmt.Errorf("сгенерировать секрет: %w", err)
+	}
+
+	return hex.EncodeToString(secret), nil
 }
 
 // NewSigner создает signer для симметричной подписи cookie.

@@ -23,7 +23,7 @@ type BatchResult struct {
 }
 
 // BatchCreate сокращает несколько URL пользователя атомарно: pre-validation, затем одна транзакция в БД.
-func (s *service) BatchCreate(ctx context.Context, userID string, items []BatchItem) ([]BatchResult, error) {
+func (s *Service) BatchCreate(ctx context.Context, userID string, items []BatchItem) ([]BatchResult, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, fmt.Errorf("создать batch: %w", err)
 	}
@@ -33,7 +33,7 @@ func (s *service) BatchCreate(ctx context.Context, userID string, items []BatchI
 	}
 
 	if len(items) > maxBatchSize {
-		return nil, ErrInvalidUrl
+		return nil, fmt.Errorf("создать batch: не больше %d url за запрос: %w", maxBatchSize, ErrBatchTooLarge)
 	}
 
 	// При первой ошибке — отклоняем весь запрос (partial success не поддерживается контрактом).
@@ -95,7 +95,7 @@ func findInBatchDuplicateURLs(items []BatchItem) []string {
 	return duplicates
 }
 
-func (s *service) buildBatchRecords(items []BatchItem) ([]model.BatchRecord, []BatchResult, error) {
+func (s *Service) buildBatchRecords(items []BatchItem) ([]model.BatchRecord, []BatchResult, error) {
 
 	// создаем map для хранения использованных shortUrl
 	usedIDs := make(map[string]struct{}, len(items))

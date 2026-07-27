@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/MaximVebDevJs/go-u-shr/internal/model"
+	"github.com/jackc/pgx/v5"
 )
 
 // BatchRecord описывает одну запись для пакетной вставки.
@@ -27,31 +28,14 @@ func (r *Repository) CreateBatch(ctx context.Context, userID string, records []B
 		return fmt.Errorf("начать транзакцию: %w", err)
 	}
 
-	// Rollback нужен для отката при ошибке Exec/Commit.
+	// Rollback нужен для отката при ошибке вставки или Commit.
 	defer func() {
 		_ = tx.Rollback(context.Background())
 	}()
 
-	// создаем слайс для хранения дублирующихся original_url
-	conflicts := make([]string, 0)
-
-	for _, rec := range records {
-		// вставляем запись в БД
-		returnedID, insertErr := r.insertURL(ctx, tx, userID, rec.OriginalURL, rec.ID)
-		if errors.Is(insertErr, ErrOriginalURLExists) {
-			conflicts = appendUniqueURL(conflicts, rec.OriginalURL)
-			continue
-		}
-
-		if insertErr != nil {
-			return insertErr
-		}
-
-		// если returnedID не равен rec.ID, то запись уже существует
-		if returnedID != rec.ID {
-			// добавляем original_url в слайс conflicts
-			conflicts = appendUniqueURL(conflicts, rec.OriginalURL)
-		}
+	conflicts, err := upsertBatch(ctx, tx, userID, records)
+	if err != nil {
+		return err
 	}
 
 	if len(conflicts) > 0 {
@@ -63,6 +47,56 @@ func (r *Repository) CreateBatch(ctx context.Context, userID string, records []B
 	}
 
 	return nil
+}
+
+// upsertBatch отправляет все вставки одним batch-запросом и возвращает original_url,
+// уже занятые живыми записями.
+func upsertBatch(ctx context.Context, tx pgx.Tx, userID string, records []BatchRecord) ([]string, error) {
+	batch := &pgx.Batch{}
+	for _, rec := range records {
+		batch.Queue(upsertURLQuery, rec.OriginalURL, rec.ID, userID)
+	}
+
+	results := tx.SendBatch(ctx, batch)
+
+	var (
+		conflicts = make([]string, 0)
+		firstErr  error
+	)
+
+	for _, rec := range records {
+		var (
+			returnedID string
+			owned      bool
+		)
+
+		err := results.QueryRow().Scan(&returnedID, &owned)
+
+		switch {
+		// ErrNoRows означает, что конкурирующая транзакция заняла original_url уже после
+		// снапшота нашего запроса — для клиента это такой же конфликт.
+		case errors.Is(err, pgx.ErrNoRows):
+			conflicts = appendUniqueURL(conflicts, rec.OriginalURL)
+		case err != nil:
+			// Первая SQL-ошибка обрывает всю транзакцию, остальные результаты повторяют её.
+			if firstErr == nil {
+				firstErr = err
+			}
+		case !owned:
+			conflicts = appendUniqueURL(conflicts, rec.OriginalURL)
+		}
+	}
+
+	// Close обязателен до Commit: он дочитывает оставшиеся результаты batch.
+	if closeErr := results.Close(); closeErr != nil && firstErr == nil {
+		firstErr = closeErr
+	}
+
+	if firstErr != nil {
+		return nil, mapCreateError(firstErr)
+	}
+
+	return conflicts, nil
 }
 
 func appendUniqueURL(urls []string, url string) []string {

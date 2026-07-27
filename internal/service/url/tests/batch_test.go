@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	urlRepo "github.com/MaximVebDevJs/go-u-shr/internal/repository/url"
+	"github.com/MaximVebDevJs/go-u-shr/internal/model"
 	urlService "github.com/MaximVebDevJs/go-u-shr/internal/service/url"
 	"github.com/MaximVebDevJs/go-u-shr/internal/service/url/mocks"
 	"github.com/stretchr/testify/assert"
@@ -38,7 +38,7 @@ func TestBatchCreateUrlService(t *testing.T) {
 			setupMock: func(repo *mocks.UrlRepository) {
 				repo.EXPECT().
 					CreateBatch(ctx, userID, mock.Anything).
-					RunAndReturn(func(_ context.Context, gotUserID string, records []urlRepo.BatchRecord) error {
+					RunAndReturn(func(_ context.Context, gotUserID string, records []model.BatchRecord) error {
 						assert.Equal(t, userID, gotUserID)
 						require.Len(t, records, 2)
 						assert.Equal(t, "https://example.com/a", records[0].OriginalURL)
@@ -90,7 +90,7 @@ func TestBatchCreateUrlService(t *testing.T) {
 				return items
 			}(),
 			setupMock:   func(repo *mocks.UrlRepository) {},
-			expectedErr: urlService.ErrInvalidUrl,
+			expectedErr: urlService.ErrBatchTooLarge,
 		},
 	}
 

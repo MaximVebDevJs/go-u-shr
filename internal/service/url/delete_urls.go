@@ -29,7 +29,7 @@ type deleteTask struct {
 }
 
 // DeleteUrls принимает URL пользователя на асинхронное удаление и не ждёт выполнения SQL update.
-func (s *service) DeleteUrls(ctx context.Context, userID string, ids []string) error {
+func (s *Service) DeleteUrls(ctx context.Context, userID string, ids []string) error {
 	if err := ctx.Err(); err != nil {
 		return fmt.Errorf("удалить urls: %w", err)
 	}
@@ -43,6 +43,8 @@ func (s *service) DeleteUrls(ctx context.Context, userID string, ids []string) e
 
 	task := deleteTask{userID: userID, ids: uniqueIDs}
 
+	// Постановка неблокирующая: WriteTimeout сервера не отменяет request context,
+	// поэтому ожидание свободного места в очереди подвесило бы запрос на неопределённый срок.
 	select {
 	case <-ctx.Done():
 		return fmt.Errorf("поставить urls на удаление: %w", ctx.Err())
@@ -50,6 +52,14 @@ func (s *service) DeleteUrls(ctx context.Context, userID string, ids []string) e
 		return fmt.Errorf("поставить urls на удаление: %w", errServiceStopped)
 	case s.deleteQueue <- task:
 		return nil
+	default:
+		s.logger.Warn("очередь удаления переполнена",
+			zap.String("user_id", userID),
+			zap.Int("batch_size", len(uniqueIDs)),
+			zap.Int("queue_capacity", deleteQueueSize),
+		)
+
+		return fmt.Errorf("поставить urls на удаление: %w", ErrDeleteQueueFull)
 	}
 }
 
@@ -75,7 +85,7 @@ func normalizeDeleteIDs(ids []string) []string {
 	return result
 }
 
-func (s *service) runDeleteWorker() {
+func (s *Service) runDeleteWorker() {
 	defer s.wg.Done()
 
 	ticker := time.NewTicker(deleteFlushInterval)
@@ -139,7 +149,7 @@ func deleteBatchSize(batch map[string]map[string]struct{}) int {
 	return total
 }
 
-func (s *service) flushDeleteBatch(batch map[string]map[string]struct{}) {
+func (s *Service) flushDeleteBatch(batch map[string]map[string]struct{}) {
 	for userID, idsSet := range batch {
 		ids := idsFromSet(idsSet)
 		for len(ids) > 0 {
@@ -154,7 +164,7 @@ func (s *service) flushDeleteBatch(batch map[string]map[string]struct{}) {
 
 // markDeleted повторяет batch update при ошибке: клиент уже получил 202 и не узнает о сбое,
 // а сам update идемпотентен, поэтому повтор безопасен.
-func (s *service) markDeleted(userID string, ids []string) {
+func (s *Service) markDeleted(userID string, ids []string) {
 	for attempt := 1; attempt <= deleteFlushAttempts; attempt++ {
 		// Flush использует собственный timeout: request context уже мог завершиться после ответа 202.
 		ctx, cancel := context.WithTimeout(context.Background(), deleteFlushTimeout)

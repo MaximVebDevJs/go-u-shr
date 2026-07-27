@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"time"
 
+	chiMiddleware "github.com/go-chi/chi/v5/middleware"
 	"go.uber.org/zap"
 )
 
@@ -39,6 +40,7 @@ func RequestLogger(log *zap.Logger) func(next http.Handler) http.Handler {
 			next.ServeHTTP(rw, r)
 
 			log.Info("HTTP request",
+				zap.String("request_id", chiMiddleware.GetReqID(r.Context())),
 				zap.String("method", r.Method),
 				zap.String("path", r.URL.Path),
 				zap.Int("status", rw.status),
