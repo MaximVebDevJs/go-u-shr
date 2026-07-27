@@ -5,13 +5,12 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/MaximVebDevJs/go-u-shr/internal/model"
 	urlService "github.com/MaximVebDevJs/go-u-shr/internal/service/url"
 	"github.com/MaximVebDevJs/go-u-shr/internal/service/url/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-
-	urlRepo "github.com/MaximVebDevJs/go-u-shr/internal/repository/url"
 )
 
 func TestCreateUrlService(t *testing.T) {
@@ -56,7 +55,7 @@ func TestCreateUrlService(t *testing.T) {
 						originalURL,
 						mock.Anything,
 					).
-					Return("existing1", urlRepo.ErrOriginalURLExists)
+					Return("existing1", model.ErrOriginalURLExists)
 			},
 			expectedErr:    urlService.ErrURLAlreadyExists,
 			expectedResult: baseURL + "/existing1",

@@ -24,7 +24,7 @@ func (r *Repository) MarkDeleted(ctx context.Context, userID string, ids []strin
 	`
 
 	// RowsAffected намеренно не проверяем: missing, чужие и уже удалённые id — идемпотентный no-op.
-	if _, err := r.getter.DefaultTrOrDB(ctx, r.pool).Exec(ctx, query, userID, ids); err != nil {
+	if _, err := r.pool.Exec(ctx, query, userID, ids); err != nil {
 		return fmt.Errorf("пометить urls удалёнными: %w", err)
 	}
 

@@ -53,6 +53,12 @@ func (h *Handler) GetUserURLs(w http.ResponseWriter, r *http.Request) error {
 		"Content-Type",
 		"application/json",
 	)
+	w.WriteHeader(http.StatusOK)
 
-	return json.NewEncoder(w).Encode(resp)
+	if encErr := json.NewEncoder(w).Encode(resp); encErr != nil {
+		// Заголовки уже отправлены — не возвращаем ошибку, чтобы Wrap не записал второй ответ.
+		h.logger.Error("не удалось закодировать JSON-ответ", zap.Error(encErr))
+	}
+
+	return nil
 }

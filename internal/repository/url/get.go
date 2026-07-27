@@ -18,7 +18,7 @@ func (r *Repository) Get(ctx context.Context, id string) (string, error) {
 	var originalURL string
 	var isDeleted bool
 
-	err := r.getter.DefaultTrOrDB(ctx, r.pool).QueryRow(ctx, query, id).Scan(&originalURL, &isDeleted)
+	err := r.pool.QueryRow(ctx, query, id).Scan(&originalURL, &isDeleted)
 	if err != nil {
 		return "", mapGetError(err)
 	}

@@ -11,7 +11,7 @@ import (
 // maxIDGenerationAttempts — сколько раз пробуем сгенерировать ID при коллизии.
 const maxIDGenerationAttempts = 5
 
-func (s *service) Create(ctx context.Context, userID string, originalURL string) (string, error) {
+func (s *Service) Create(ctx context.Context, userID string, originalURL string) (string, error) {
 	if err := ctx.Err(); err != nil {
 		return "", fmt.Errorf("создать url: %w", err)
 	}

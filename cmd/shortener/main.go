@@ -4,13 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
+	"github.com/MaximVebDevJs/go-u-shr/internal/auth"
 	"github.com/MaximVebDevJs/go-u-shr/internal/config"
 	"github.com/MaximVebDevJs/go-u-shr/internal/logger"
 	urlRepo "github.com/MaximVebDevJs/go-u-shr/internal/repository/url"
@@ -27,47 +28,96 @@ const (
 	idleTimeout     = 60 * time.Second
 )
 
+const exitFailure = 1
+
 func main() {
+	// os.Exit не выполняет defer, поэтому вся инициализация живёт в run.
+	os.Exit(run())
+}
+
+func run() int {
 	cfg := config.Load()
 
 	log, err := logger.New(cfg.LogLevel)
 	if err != nil {
-		slog.Error("не удалось инициализировать логер", "error", err)
-		os.Exit(1)
+		fmt.Fprintf(os.Stderr, "инициализация логера: %v\n", err)
+
+		return exitFailure
 	}
-	defer log.Sync()
+	defer func() { _ = log.Sync() }()
+
+	if err = ensureAuthSecret(cfg, log); err != nil {
+		log.Error("подготовка секрета авторизации", zap.Error(err))
+
+		return exitFailure
+	}
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	startupCtx, cancelStartup := context.WithTimeout(ctx, startupTimeout)
-	defer cancelStartup()
-
-	pool, err := pgxpool.New(startupCtx, cfg.DatabaseDSN)
+	pool, err := newPool(ctx, cfg, log)
 	if err != nil {
-		slog.Error("создание пула соединений", "error", err)
-		os.Exit(1)
+		log.Error("инициализация базы данных", zap.Error(err))
+
+		return exitFailure
 	}
 	defer pool.Close()
 
+	if err = serve(ctx, cfg, log, pool); err != nil {
+		log.Error("работа urlShortener сервиса", zap.Error(err))
+
+		return exitFailure
+	}
+
+	return 0
+}
+
+// ensureAuthSecret подставляет одноразовый секрет, если он не задан конфигурацией.
+func ensureAuthSecret(cfg *config.Config, log *zap.Logger) error {
+	if strings.TrimSpace(cfg.AuthSecret) != "" {
+		return nil
+	}
+
+	secret, err := auth.GenerateSecret()
+	if err != nil {
+		return fmt.Errorf("сгенерировать секрет авторизации: %w", err)
+	}
+
+	cfg.AuthSecret = secret
+
+	log.Warn("AUTH_SECRET не задан: сгенерирован временный секрет, " +
+		"выданные cookie не переживут перезапуск процесса")
+
+	return nil
+}
+
+func newPool(ctx context.Context, cfg *config.Config, log *zap.Logger) (*pgxpool.Pool, error) {
+	startupCtx, cancel := context.WithTimeout(ctx, startupTimeout)
+	defer cancel()
+
+	pool, err := pgxpool.New(startupCtx, cfg.DatabaseDSN)
+	if err != nil {
+		return nil, fmt.Errorf("создание пула соединений: %w", err)
+	}
+
 	if err = pool.Ping(startupCtx); err != nil {
-		slog.Error("проверка удалось ли подключиться к базе данных", "error", err)
-		os.Exit(1)
+		pool.Close()
+
+		return nil, fmt.Errorf("проверка соединения с базой данных: %w", err)
 	}
 
 	if err = urlRepo.Migrate(startupCtx, pool); err != nil {
-		slog.Error("миграция базы данных", "error", err)
-		os.Exit(1)
-	}
-	cancelStartup()
+		pool.Close()
 
-	if err = run(ctx, cfg, log, pool); err != nil {
-		slog.Error("ошибка запуска urlShortener сервиса", "error", err)
-		os.Exit(1)
+		return nil, fmt.Errorf("миграция базы данных: %w", err)
 	}
+
+	log.Info("подключение к базе данных установлено")
+
+	return pool, nil
 }
 
-func run(ctx context.Context, cfg *config.Config, log *zap.Logger, pool *pgxpool.Pool) error {
+func serve(ctx context.Context, cfg *config.Config, log *zap.Logger, pool *pgxpool.Pool) error {
 	// Создать HTTP-обработчик через фабрику приложения.
 	handler, cleanup, err := app.NewHTTPHandler(cfg, log, pool)
 	if err != nil {

@@ -8,7 +8,8 @@ import (
 	"go.uber.org/zap"
 )
 
-type service struct {
+// Service реализует usecase-логику сокращения ссылок и владеет worker-ом асинхронного удаления.
+type Service struct {
 	urlRepo UrlRepository
 	baseURL string
 	logger  *zap.Logger
@@ -21,12 +22,12 @@ type service struct {
 }
 
 // New создаёт URL service и запускает worker асинхронного удаления.
-func New(urlRepo UrlRepository, baseURL string, logger *zap.Logger) *service {
+func New(urlRepo UrlRepository, baseURL string, logger *zap.Logger) *Service {
 	if logger == nil {
 		logger = zap.NewNop()
 	}
 
-	s := &service{
+	s := &Service{
 		urlRepo:     urlRepo,
 		baseURL:     baseURL,
 		logger:      logger,
@@ -42,7 +43,7 @@ func New(urlRepo UrlRepository, baseURL string, logger *zap.Logger) *service {
 }
 
 // Close останавливает фоновые задачи service и ждёт их завершения до отмены ctx.
-func (s *service) Close(ctx context.Context) error {
+func (s *Service) Close(ctx context.Context) error {
 	// Once защищает от повторного close(s.stop), если Close вызовут дважды.
 	s.stopOnce.Do(func() {
 		close(s.stop)

@@ -158,6 +158,44 @@ func TestRepositoryMarkDeleted(t *testing.T) {
 	assert.Empty(t, userURLs)
 }
 
+func TestRepositoryCreateAfterDeleteReturnsWorkingAlias(t *testing.T) {
+	ctx := context.Background()
+	repo, _ := setupTestRepository(t)
+
+	const (
+		originalURL = "https://example.com/revived"
+		firstID     = "revive01"
+		secondID    = "revive02"
+	)
+
+	_, err := repo.Create(ctx, "user-1", originalURL, firstID)
+	require.NoError(t, err)
+
+	require.NoError(t, repo.MarkDeleted(ctx, "user-1", []string{firstID}))
+
+	_, err = repo.Get(ctx, firstID)
+	require.ErrorIs(t, err, urlRepo.ErrDeleted)
+
+	// Повторное сокращение того же URL другим пользователем должно вернуть рабочую ссылку,
+	// а не конфликт с мёртвым alias.
+	returnedID, err := repo.Create(ctx, "user-2", originalURL, secondID)
+	require.NoError(t, err)
+
+	got, err := repo.Get(ctx, returnedID)
+	require.NoError(t, err)
+	assert.Equal(t, originalURL, got)
+
+	userURLs, err := repo.GetUserURLs(ctx, "user-2")
+	require.NoError(t, err)
+	require.Len(t, userURLs, 1)
+	assert.Equal(t, returnedID, userURLs[0].ShortID)
+
+	// Прежний владелец ссылку больше не видит.
+	previousOwnerURLs, err := repo.GetUserURLs(ctx, "user-1")
+	require.NoError(t, err)
+	assert.Empty(t, previousOwnerURLs)
+}
+
 func TestRepositoryCreateDuplicateOriginalURL(t *testing.T) {
 	ctx := context.Background()
 	repo, _ := setupTestRepository(t)

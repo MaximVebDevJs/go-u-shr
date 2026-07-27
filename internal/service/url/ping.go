@@ -4,6 +4,6 @@ import (
 	"context"
 )
 
-func (s *service) Ping(ctx context.Context) error {
+func (s *Service) Ping(ctx context.Context) error {
 	return s.urlRepo.Ping(ctx)
 }
